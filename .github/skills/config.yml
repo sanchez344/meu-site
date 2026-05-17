@@ -1,0 +1,8 @@
+title: Minha Primeira Skill do GitHub
+description: Um curso rápido para aprender conceitos de programação.
+steps:
+  - title: Passo 1 - Introdução
+    description: Bem-vindo ao curso!
+    actions:
+      - type: respond
+        with: introducao.md
