@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prova Segura - Extração Automática de Arquivos</title>
-    <!-- Bibliotecas para extrair texto de arquivos -->
+    <title>Prova Segura - Com IA Integrada</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.16/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -42,6 +41,7 @@
         .file-info { background: #e8f5e9; padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 14px; }
         .sucesso { color: green; font-weight: bold; }
         .erro { color: red; font-weight: bold; }
+        .config-box { background: #fff3e0; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #ff9800; }
     </style>
 </head>
 <body>
@@ -70,21 +70,37 @@
         <div class="container">
             <div class="card">
                 <h1>👨‍🏫 Painel do Professor</h1>
+                
+                <div class="config-box">
+                    <h3>🔑 Configuração da IA (Google Gemini - Grátis)</h3>
+                    <p>Para gerar provas automaticamente, você precisa de uma chave API gratuita:</p>
+                    <ol style="margin: 10px 0 10px 20px;">
+                        <li>Acesse: <a href="https://aistudio.google.com/app/apikey" target="_blank">https://aistudio.google.com/app/apikey</a></li>
+                        <li>Faça login com sua conta Google</li>
+                        <li>Clique em "Create API Key"</li>
+                        <li>Copie a chave gerada</li>
+                        <li>Cole abaixo e clique em Salvar</li>
+                    </ol>
+                    <input type="password" id="apiKey" placeholder="Cole sua chave API do Google Gemini aqui" class="input">
+                    <button onclick="salvarApiKey()" class="btn-entrar" style="background:#ff9800;">💾 Salvar Chave</button>
+                    <div id="statusApi" style="margin-top: 10px; font-size: 12px;"></div>
+                </div>
+                
                 <div class="ia-box">
-                    <h2>🤖 Gerar Prova com IA</h2>
+                    <h2>🤖 Gerar Prova com IA (Automático)</h2>
                     <p><strong>Opção 1:</strong> Cole o texto manualmente</p>
                     <textarea id="materialIA" class="textarea-material" placeholder="Cole aqui o texto da sua matéria..."></textarea>
                     
-                    <p><strong>Opção 2:</strong> Ou faça upload de um arquivo (PPTX, DOCX, PDF ou TXT) - O SISTEMA EXTRAI O TEXTO AUTOMATICAMENTE!</p>
+                    <p><strong>Opção 2:</strong> Ou faça upload de um arquivo (PPTX, DOCX, PDF ou TXT)</p>
                     <input type="file" id="arquivoUpload" accept=".txt,.pdf,.docx,.pptx" class="input">
                     <button onclick="uploadArquivo()" class="btn-upload">📁 Carregar e Extrair Texto</button>
                     <div id="fileInfo" class="file-info" style="display:none;"></div>
                     
                     <input type="number" id="quantidadeQuestoes" placeholder="Quantidade de questões (padrão: 10)" class="input" value="10">
-                    <button onclick="gerarProvaComIA()" class="btn-gerar-ia">✨ Gerar Prova com IA ✨</button>
+                    <button onclick="gerarProvaComIA()" class="btn-gerar-ia">✨ GERAR PROVA AUTOMATICAMENTE ✨</button>
                     <div id="loadingIA" class="loading">
                         <div class="spinner"></div>
-                        <p>Processando arquivo e extraindo texto...</p>
+                        <p>IA está gerando as perguntas... Aguarde...</p>
                     </div>
                 </div>
                 <hr>
@@ -128,19 +144,28 @@
         let provaAtual = null;
         let respostasAluno = [];
         let textoExtraido = "";
+        let API_KEY = localStorage.getItem('gemini_api_key') || "";
         const SENHA_PROFESSOR = "professor123";
 
         // Configurar PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
+        function salvarApiKey() {
+            const key = document.getElementById('apiKey').value;
+            if (key && key.trim()) {
+                localStorage.setItem('gemini_api_key', key.trim());
+                API_KEY = key.trim();
+                document.getElementById('statusApi').innerHTML = '<span class="sucesso">✅ Chave API salva com sucesso!</span>';
+                setTimeout(() => { document.getElementById('statusApi').innerHTML = ''; }, 3000);
+            } else {
+                alert('❌ Cole uma chave válida!');
+            }
+        }
+
         async function uploadArquivo() {
             const fileInput = document.getElementById('arquivoUpload');
             const file = fileInput.files[0];
-            
-            if (!file) {
-                alert('❌ Selecione um arquivo primeiro!');
-                return;
-            }
+            if (!file) { alert('❌ Selecione um arquivo primeiro!'); return; }
 
             document.getElementById('loadingIA').style.display = 'block';
             document.getElementById('fileInfo').style.display = 'none';
@@ -150,42 +175,22 @@
 
             try {
                 let texto = "";
-
-                if (fileExtension === 'txt') {
-                    texto = await lerTXT(file);
-                }
-                else if (fileExtension === 'pdf') {
-                    texto = await lerPDF(file);
-                }
-                else if (fileExtension === 'docx') {
-                    texto = await lerDOCX(file);
-                }
-                else if (fileExtension === 'pptx') {
-                    texto = await lerPPTX(file);
-                }
-                else {
-                    alert('Formato não suportado. Use: TXT, PDF, DOCX ou PPTX');
-                    document.getElementById('loadingIA').style.display = 'none';
-                    return;
-                }
+                if (fileExtension === 'txt') texto = await lerTXT(file);
+                else if (fileExtension === 'pdf') texto = await lerPDF(file);
+                else if (fileExtension === 'docx') texto = await lerDOCX(file);
+                else if (fileExtension === 'pptx') texto = await lerPPTX(file);
+                else { alert('Formato não suportado'); document.getElementById('loadingIA').style.display = 'none'; return; }
 
                 textoExtraido = texto;
-                
-                const preview = texto.substring(0, 500) + (texto.length > 500 ? "..." : "");
-                document.getElementById('materialIA').value = preview;
-                
-                const infoDiv = document.getElementById('fileInfo');
-                infoDiv.innerHTML = `✅ Arquivo processado: ${fileName}<br>📝 Texto extraído: ${texto.length} caracteres<br>🔍 Preview: ${preview.substring(0, 100)}...`;
-                infoDiv.style.display = 'block';
-                
+                document.getElementById('materialIA').value = texto.substring(0, 500);
+                document.getElementById('fileInfo').innerHTML = `✅ Arquivo processado: ${fileName}<br>📝 Texto extraído: ${texto.length} caracteres`;
+                document.getElementById('fileInfo').style.display = 'block';
                 document.getElementById('loadingIA').style.display = 'none';
-                alert(`✅ Texto extraído com sucesso!\n\nTotal de ${texto.length} caracteres extraídos.\n\nAgora clique em "Gerar Prova com IA" para criar as perguntas.`);
-                
+                alert(`✅ Texto extraído! ${texto.length} caracteres. Clique em "GERAR PROVA AUTOMATICAMENTE"`);
             } catch (error) {
                 document.getElementById('loadingIA').style.display = 'none';
-                document.getElementById('fileInfo').innerHTML = `❌ Erro: ${error.message}<br>Tente copiar o texto manualmente na Opção 1.`;
+                document.getElementById('fileInfo').innerHTML = `❌ Erro: ${error.message}`;
                 document.getElementById('fileInfo').style.display = 'block';
-                document.getElementById('fileInfo').style.background = '#ffebee';
             }
         }
 
@@ -206,24 +211,14 @@
                         const typedarray = new Uint8Array(e.target.result);
                         const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
                         let textoCompleto = "";
-                        
                         for (let i = 1; i <= pdf.numPages; i++) {
                             const page = await pdf.getPage(i);
                             const textContent = await page.getTextContent();
-                            const pageText = textContent.items.map(item => item.str).join(' ');
-                            textoCompleto += pageText + "\n";
+                            textoCompleto += textContent.items.map(item => item.str).join(' ') + "\n";
                         }
-                        
-                        if (textoCompleto.trim().length < 50) {
-                            reject(new Error('PDF parece ser escaneado (imagem). Use OCR online como ilovepdf.com para converter primeiro.'));
-                        } else {
-                            resolve(textoCompleto);
-                        }
-                    } catch (error) {
-                        reject(new Error('Erro ao extrair texto do PDF: ' + error.message));
-                    }
+                        resolve(textoCompleto);
+                    } catch (error) { reject(error); }
                 };
-                reader.onerror = () => reject(new Error('Erro ao ler arquivo PDF'));
                 reader.readAsArrayBuffer(file);
             });
         }
@@ -233,18 +228,10 @@
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     try {
-                        const arrayBuffer = e.target.result;
-                        const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
-                        if (result.value.trim().length < 10) {
-                            reject(new Error('Nenhum texto encontrado no DOCX'));
-                        } else {
-                            resolve(result.value);
-                        }
-                    } catch (error) {
-                        reject(new Error('Erro ao extrair texto do DOCX: ' + error.message));
-                    }
+                        const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+                        resolve(result.value);
+                    } catch (error) { reject(error); }
                 };
-                reader.onerror = () => reject(new Error('Erro ao ler arquivo DOCX'));
                 reader.readAsArrayBuffer(file);
             });
         }
@@ -254,83 +241,73 @@
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     try {
-                        const arrayBuffer = e.target.result;
-                        const zip = await JSZip.loadAsync(arrayBuffer);
+                        const zip = await JSZip.loadAsync(e.target.result);
                         let textoCompleto = "";
-                        
-                        const slideFiles = Object.keys(zip.files).filter(name => 
-                            name.match(/slide\d+\.xml$/) || name.match(/slides\/slide\d+\.xml$/)
-                        );
-                        
-                        if (slideFiles.length === 0) {
-                            reject(new Error('Nenhum slide encontrado no PowerPoint'));
-                            return;
-                        }
-                        
+                        const slideFiles = Object.keys(zip.files).filter(name => name.match(/slide\d+\.xml$/));
                         for (const slideFile of slideFiles) {
                             const xmlContent = await zip.files[slideFile].async("text");
-                            
-                            const textMatches = xmlContent.match(/<a:t>([^<]*)<\/a:t>/g) || [];
-                            const textMatches2 = xmlContent.match(/<t>([^<]*)<\/t>/g) || [];
-                            const allMatches = [...textMatches, ...textMatches2];
-                            
-                            for (const match of allMatches) {
+                            const matches = xmlContent.match(/<a:t>([^<]*)<\/a:t>/g) || [];
+                            matches.forEach(match => {
                                 let text = match.replace(/<[^>]*>/g, '').trim();
-                                if (text && text.length > 0 && text.length < 500) {
-                                    textoCompleto += text + " ";
-                                }
-                            }
+                                if (text && text.length > 0) textoCompleto += text + " ";
+                            });
                         }
-                        
-                        if (textoCompleto.trim().length < 20) {
-                            reject(new Error('Nenhum texto encontrado. PowerPoint pode ter apenas imagens ou texto em formatos não suportados. Tente copiar o texto manualmente.'));
-                        } else {
-                            resolve(textoCompleto);
-                        }
-                    } catch (error) {
-                        reject(new Error('Erro ao extrair texto do PowerPoint: ' + error.message));
-                    }
+                        resolve(textoCompleto);
+                    } catch (error) { reject(error); }
                 };
-                reader.onerror = () => reject(new Error('Erro ao ler arquivo PPTX'));
                 reader.readAsArrayBuffer(file);
             });
         }
 
-        function gerarProvaComIA() {
-            let material = document.getElementById('materialIA').value;
+        async function gerarProvaComIA() {
+            const material = document.getElementById('materialIA').value;
             const quantidade = document.getElementById('quantidadeQuestoes').value || 10;
             
             if (!material || material.trim() === "") {
-                alert('⚠️ Nenhum texto disponível! Faça upload de um arquivo ou cole um texto primeiro.');
+                alert('⚠️ Nenhum texto disponível! Faça upload de um arquivo primeiro.');
+                return;
+            }
+
+            if (!API_KEY) {
+                alert('⚠️ Configure sua chave API do Google Gemini na caixa acima!\n\n1. Acesse aistudio.google.com/app/apikey\n2. Crie uma chave gratuita\n3. Cole no campo e clique em Salvar');
                 return;
             }
 
             document.getElementById('loadingIA').style.display = 'block';
-            
-            const prompt = `Você é um professor especialista. Crie ${quantidade} perguntas de múltipla escolha com 4 alternativas cada.
 
-Formato JSON obrigatório:
-{"titulo":"Título","perguntas":[{"texto":"Pergunta?","alternativas":["A","B","C","D"],"correta":0}]}
+            const prompt = `Crie exatamente ${quantidade} perguntas de múltipla escolha sobre o assunto abaixo. Cada pergunta deve ter 4 alternativas (A, B, C, D) e apenas uma correta. Responda APENAS com JSON válido neste formato: {"titulo":"Título da Prova","perguntas":[{"texto":"Pergunta?","alternativas":["A","B","C","D"],"correta":0}]}
 
-Material:
-${material.substring(0, 4000)}`;
+Assunto: ${material.substring(0, 3000)}`;
 
-            navigator.clipboard.writeText(prompt).then(() => {
+            try {
+                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + API_KEY, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: prompt }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
                 document.getElementById('loadingIA').style.display = 'none';
-                alert('✅ Prompt copiado!\n\n1. Abra o ChatGPT/Copilot\n2. Cole e gere o JSON\n3. Copie o JSON\n4. Clique OK e cole');
-                
-                const jsonResposta = prompt("Cole o JSON gerado pela IA:");
-                if (jsonResposta && jsonResposta.trim()) {
-                    try {
-                        let jsonLimpo = jsonResposta.trim();
-                        jsonLimpo = jsonLimpo.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-                        const provaGerada = JSON.parse(jsonLimpo);
-                        preencherFormularioComProva(provaGerada);
-                    } catch(e) {
-                        alert('❌ JSON inválido! Copie exatamente o que a IA gerou.');
-                    }
+
+                if (data.error) {
+                    alert('Erro na API: ' + data.error.message + '\n\nVerifique se sua chave API está correta.');
+                    return;
                 }
-            });
+
+                let textoResposta = data.candidates[0].content.parts[0].text;
+                textoResposta = textoResposta.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+                
+                const provaGerada = JSON.parse(textoResposta);
+                preencherFormularioComProva(provaGerada);
+                
+            } catch (error) {
+                document.getElementById('loadingIA').style.display = 'none';
+                alert('Erro ao gerar prova: ' + error.message);
+            }
         }
 
         function preencherFormularioComProva(provaGerada) {
@@ -341,7 +318,7 @@ ${material.substring(0, 4000)}`;
             perguntaCount = 0;
             
             if (!provaGerada.perguntas || provaGerada.perguntas.length === 0) {
-                alert('Nenhuma pergunta gerada!');
+                alert('Nenhuma pergunta gerada! Tente novamente.');
                 return;
             }
             
@@ -382,6 +359,7 @@ ${material.substring(0, 4000)}`;
                 document.getElementById('telaLogin').style.display = 'none';
                 document.getElementById('painelProfessor').style.display = 'block';
                 carregarListaProvas();
+                if (API_KEY) { document.getElementById('apiKey').value = API_KEY; }
             } else { alert('Senha incorreta! Use: professor123'); }
         }
         function carregarListaProvas() {
