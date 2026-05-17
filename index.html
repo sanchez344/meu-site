@@ -10,13 +10,11 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
         }
-
         .container {
             display: flex;
             justify-content: center;
@@ -24,7 +22,6 @@
             min-height: 100vh;
             padding: 20px;
         }
-
         .card {
             background: white;
             border-radius: 20px;
@@ -33,25 +30,21 @@
             max-width: 800px;
             width: 100%;
         }
-
         h1 {
             color: #333;
             text-align: center;
             margin-bottom: 30px;
         }
-
         h2 {
             color: #555;
             margin: 20px 0;
         }
-
         .tipo-usuario {
             display: flex;
             gap: 20px;
             justify-content: center;
             margin-bottom: 30px;
         }
-
         .btn-professor, .btn-aluno {
             padding: 15px 30px;
             font-size: 18px;
@@ -60,21 +53,17 @@
             cursor: pointer;
             transition: transform 0.3s;
         }
-
         .btn-professor {
             background: #4CAF50;
             color: white;
         }
-
         .btn-aluno {
             background: #2196F3;
             color: white;
         }
-
         .btn-professor:hover, .btn-aluno:hover {
             transform: translateY(-2px);
         }
-
         .input {
             width: 100%;
             padding: 12px;
@@ -83,7 +72,6 @@
             border-radius: 8px;
             font-size: 16px;
         }
-
         .btn-entrar, .btn-criar, .btn-salvar, .btn-entregar, .btn-voltar {
             width: 100%;
             padding: 12px;
@@ -94,13 +82,7 @@
             border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
-            transition: background 0.3s;
         }
-
-        .btn-entrar:hover, .btn-criar:hover {
-            background: #5a67d8;
-        }
-
         .btn-adicionar {
             background: #48bb78;
             color: white;
@@ -110,21 +92,18 @@
             border-radius: 8px;
             cursor: pointer;
         }
-
         .pergunta-item {
             background: #f7f7f7;
             padding: 15px;
             margin: 10px 0;
             border-radius: 10px;
         }
-
         .alternativa {
             margin: 5px 0;
             padding: 8px;
             background: white;
             border-radius: 5px;
         }
-
         .prova-container {
             max-width: 800px;
             margin: 20px auto;
@@ -133,7 +112,6 @@
             padding: 30px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-
         .header-prova {
             display: flex;
             justify-content: space-between;
@@ -142,48 +120,85 @@
             padding-bottom: 20px;
             border-bottom: 2px solid #eee;
         }
-
         .timer {
             font-size: 24px;
             font-weight: bold;
             color: #e53e3e;
         }
-
         .questao {
             margin: 30px 0;
             padding: 20px;
             background: #f7f7f7;
             border-radius: 10px;
         }
-
         .opcao {
             margin: 10px 0;
             padding: 10px;
             cursor: pointer;
             border-radius: 8px;
-            transition: background 0.3s;
         }
-
-        .opcao:hover {
-            background: #e0e0e0;
-        }
-
         .dica {
             font-size: 12px;
             color: #999;
             text-align: center;
             margin-top: 10px;
         }
-
         .modo-prova {
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
         }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .btn-gerar-ia {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: #e91e63;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .textarea-material {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            min-height: 150px;
+            font-family: inherit;
+        }
+        .ia-box {
+            background: #f0f0ff;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
-    <!-- Tela de Login -->
     <div id="telaLogin" class="container">
         <div class="card">
             <h1>📚 Sistema de Provas Anti-Cola</h1>
@@ -191,14 +206,12 @@
                 <button onclick="mostrarLoginProfessor()" class="btn-professor">👨‍🏫 Sou Professor</button>
                 <button onclick="mostrarLoginAluno()" class="btn-aluno">🎓 Sou Aluno</button>
             </div>
-            
             <div id="loginProfessor" style="display:none;">
                 <h2>Login do Professor</h2>
                 <input type="password" id="senhaProfessor" placeholder="Senha do Professor" class="input">
                 <button onclick="loginProfessor()" class="btn-entrar">Entrar</button>
                 <p class="dica">Senha padrão: professor123</p>
             </div>
-
             <div id="loginAluno" style="display:none;">
                 <h2>Código da Prova</h2>
                 <input type="text" id="codigoProva" placeholder="Digite o código da prova" class="input">
@@ -207,20 +220,28 @@
         </div>
     </div>
 
-    <!-- Painel do Professor -->
     <div id="painelProfessor" style="display:none;">
         <div class="container">
             <div class="card">
                 <h1>👨‍🏫 Painel do Professor</h1>
-                <button onclick="criarNovaProva()" class="btn-criar">+ Criar Nova Prova</button>
-                
+                <div class="ia-box">
+                    <h2>🤖 Gerar Prova com IA</h2>
+                    <p>Cole seu material didático e a IA cria as perguntas automaticamente!</p>
+                    <textarea id="materialIA" class="textarea-material" placeholder="Cole aqui o texto da sua matéria, apostila ou resumo..."></textarea>
+                    <input type="number" id="quantidadeQuestoes" placeholder="Quantidade de questões (padrão: 10)" class="input" value="10">
+                    <button onclick="gerarProvaComIA()" class="btn-gerar-ia">✨ Gerar Prova com IA ✨</button>
+                    <div id="loadingIA" class="loading">
+                        <div class="spinner"></div>
+                        <p>IA está criando suas perguntas...</p>
+                    </div>
+                </div>
+                <hr>
+                <button onclick="criarNovaProva()" class="btn-criar">+ Criar Prova Manualmente</button>
                 <div id="listaProvas"></div>
-                
                 <div id="formProva" style="display:none;">
                     <h2>Nova Prova</h2>
                     <input type="text" id="tituloProva" placeholder="Título da Prova" class="input">
                     <input type="number" id="tempoProva" placeholder="Tempo (minutos)" class="input">
-                    
                     <div id="perguntas"></div>
                     <button onclick="adicionarPergunta()" class="btn-adicionar">+ Adicionar Pergunta</button>
                     <button onclick="salvarProva()" class="btn-salvar">Salvar Prova</button>
@@ -229,7 +250,6 @@
         </div>
     </div>
 
-    <!-- Tela da Prova -->
     <div id="telaProva" style="display:none;">
         <div class="prova-container">
             <div class="header-prova">
@@ -241,7 +261,6 @@
         </div>
     </div>
 
-    <!-- Resultado -->
     <div id="telaResultado" style="display:none;">
         <div class="container">
             <div class="card">
@@ -253,318 +272,204 @@
     </div>
 
     <script>
-        // Banco de dados simples (salva no navegador)
         let provas = JSON.parse(localStorage.getItem('provas')) || [];
         let provaAtual = null;
         let respostasAluno = [];
-
-        // Senha do professor
         const SENHA_PROFESSOR = "professor123";
 
-        // Funções de tela
+        async function gerarProvaComIA() {
+            const material = document.getElementById('materialIA').value;
+            const quantidade = document.getElementById('quantidadeQuestoes').value || 10;
+            if (!material.trim()) {
+                alert('⚠️ Cole algum material didático primeiro!');
+                return;
+            }
+            document.getElementById('loadingIA').style.display = 'block';
+            const prompt = `Crie ${quantidade} perguntas de múltipla escolha baseado neste texto: ${material.substring(0, 2000)}. Retorne APENAS JSON no formato: {"titulo":"titulo","perguntas":[{"texto":"pergunta","alternativas":["a","b","c","d"],"correta":0}]}`;
+            try {
+                await navigator.clipboard.writeText(prompt);
+                document.getElementById('loadingIA').style.display = 'none';
+                alert('✅ Prompt copiado! Abra o Copilot Chat (Ctrl+I), cole o prompt (Ctrl+V), depois cole o JSON gerado aqui.');
+                const jsonResposta = prompt("Cole o JSON gerado pelo Copilot:");
+                if (jsonResposta) {
+                    const provaGerada = JSON.parse(jsonResposta);
+                    preencherFormularioComProva(provaGerada);
+                }
+            } catch(e) {
+                document.getElementById('loadingIA').style.display = 'none';
+                alert('Erro: ' + e.message);
+            }
+        }
+
+        function preencherFormularioComProva(provaGerada) {
+            document.getElementById('formProva').style.display = 'block';
+            document.getElementById('perguntas').innerHTML = '';
+            document.getElementById('tituloProva').value = provaGerada.titulo || "Prova Gerada por IA";
+            document.getElementById('tempoProva').value = 30;
+            perguntaCount = 0;
+            provaGerada.perguntas.forEach((pergunta, idx) => {
+                const div = document.getElementById('perguntas');
+                const perguntaDiv = document.createElement('div');
+                perguntaDiv.className = 'pergunta-item';
+                perguntaDiv.id = `pergunta-${perguntaCount}`;
+                let alternativasHTML = '';
+                pergunta.alternativas.forEach((alt, altIdx) => {
+                    alternativasHTML += `<div class="alternativa"><input type="text" id="alt${altIdx}-${perguntaCount}" value="${alt.replace(/"/g, '&quot;')}" style="width:80%"><input type="radio" name="correta-${perguntaCount}" value="${altIdx}" ${pergunta.correta === altIdx ? 'checked' : ''}> ✅ Correta</div>`;
+                });
+                perguntaDiv.innerHTML = `<h3>📝 Pergunta ${perguntaCount + 1}</h3><input type="text" id="texto-${perguntaCount}" value="${pergunta.texto.replace(/"/g, '&quot;')}" class="input"><div id="alternativas-${perguntaCount}">${alternativasHTML}</div><button onclick="adicionarAlternativa(${perguntaCount})" class="btn-adicionar">+ Alternativa</button>`;
+                div.appendChild(perguntaDiv);
+                perguntaCount++;
+            });
+            alert(`✅ ${provaGerada.perguntas.length} perguntas geradas! Revise e clique em Salvar Prova.`);
+        }
+
         function mostrarLoginProfessor() {
             document.getElementById('loginProfessor').style.display = 'block';
             document.getElementById('loginAluno').style.display = 'none';
         }
-
         function mostrarLoginAluno() {
             document.getElementById('loginAluno').style.display = 'block';
             document.getElementById('loginProfessor').style.display = 'none';
         }
-
         function loginProfessor() {
             const senha = document.getElementById('senhaProfessor').value;
             if (senha === SENHA_PROFESSOR) {
                 document.getElementById('telaLogin').style.display = 'none';
                 document.getElementById('painelProfessor').style.display = 'block';
                 carregarListaProvas();
-            } else {
-                alert('Senha incorreta! Use: professor123');
-            }
+            } else { alert('Senha incorreta! Use: professor123'); }
         }
-
         function carregarListaProvas() {
             const lista = document.getElementById('listaProvas');
-            if (provas.length === 0) {
-                lista.innerHTML = '<p style="text-align:center; color:#999;">Nenhuma prova criada ainda</p>';
-                return;
-            }
-            
+            if (provas.length === 0) { lista.innerHTML = '<p style="text-align:center;color:#999;">Nenhuma prova criada</p>'; return; }
             lista.innerHTML = '<h2>📋 Provas Criadas</h2>';
             provas.forEach((prova, index) => {
-                lista.innerHTML += `
-                    <div style="background:#f7f7f7; padding:15px; margin:10px 0; border-radius:10px;">
-                        <strong>📌 ${prova.titulo}</strong><br>
-                        ⏱️ Tempo: ${prova.tempo} minutos<br>
-                        🔑 Código: <strong style="color:#667eea; font-size:18px;">PROVA-${index + 1000}</strong><br>
-                        📝 Perguntas: ${prova.perguntas.length}<br>
-                        <button onclick="verResultados(${index})" style="margin-top:10px; padding:8px 15px; background:#667eea; color:white; border:none; border-radius:5px; cursor:pointer;">📊 Ver Resultados</button>
-                    </div>
-                `;
+                lista.innerHTML += `<div style="background:#f7f7f7;padding:15px;margin:10px 0;border-radius:10px;"><strong>📌 ${prova.titulo}</strong><br>⏱️ Tempo: ${prova.tempo} min<br>🔑 Código: <strong style="color:#667eea;">PROVA-${index + 1000}</strong><br>📝 ${prova.perguntas.length} questões<br><button onclick="verResultados(${index})" style="margin-top:10px;padding:8px 15px;background:#667eea;color:white;border:none;border-radius:5px;">📊 Ver Resultados</button></div>`;
             });
         }
-
         function criarNovaProva() {
             document.getElementById('formProva').style.display = 'block';
             document.getElementById('perguntas').innerHTML = '';
             adicionarPergunta();
         }
-
         let perguntaCount = 0;
         function adicionarPergunta() {
             const div = document.getElementById('perguntas');
             const perguntaDiv = document.createElement('div');
             perguntaDiv.className = 'pergunta-item';
             perguntaDiv.id = `pergunta-${perguntaCount}`;
-            perguntaDiv.innerHTML = `
-                <h3>📝 Pergunta ${perguntaCount + 1}</h3>
-                <input type="text" id="texto-${perguntaCount}" placeholder="Digite o enunciado da pergunta" class="input">
-                <div id="alternativas-${perguntaCount}">
-                    <div class="alternativa">
-                        <input type="text" id="alt0-${perguntaCount}" placeholder="Alternativa A">
-                        <input type="radio" name="correta-${perguntaCount}" value="0"> ✅ Correta
-                    </div>
-                    <div class="alternativa">
-                        <input type="text" id="alt1-${perguntaCount}" placeholder="Alternativa B">
-                        <input type="radio" name="correta-${perguntaCount}" value="1"> ✅ Correta
-                    </div>
-                </div>
-                <button onclick="adicionarAlternativa(${perguntaCount})" class="btn-adicionar" style="font-size:12px;">+ Adicionar Alternativa</button>
-            `;
+            perguntaDiv.innerHTML = `<h3>📝 Pergunta ${perguntaCount+1}</h3><input type="text" id="texto-${perguntaCount}" placeholder="Enunciado" class="input"><div id="alternativas-${perguntaCount}"><div class="alternativa"><input type="text" id="alt0-${perguntaCount}" placeholder="Alternativa A"><input type="radio" name="correta-${perguntaCount}" value="0"> ✅ Correta</div><div class="alternativa"><input type="text" id="alt1-${perguntaCount}" placeholder="Alternativa B"><input type="radio" name="correta-${perguntaCount}" value="1"> ✅ Correta</div></div><button onclick="adicionarAlternativa(${perguntaCount})" class="btn-adicionar">+ Alternativa</button>`;
             div.appendChild(perguntaDiv);
             perguntaCount++;
         }
-
         function adicionarAlternativa(perguntaId) {
             const container = document.getElementById(`alternativas-${perguntaId}`);
             const numAlt = container.children.length;
             const altDiv = document.createElement('div');
             altDiv.className = 'alternativa';
-            altDiv.innerHTML = `
-                <input type="text" id="alt${numAlt}-${perguntaId}" placeholder="Alternativa ${String.fromCharCode(65 + numAlt)}">
-                <input type="radio" name="correta-${perguntaId}" value="${numAlt}"> ✅ Correta
-            `;
+            altDiv.innerHTML = `<input type="text" id="alt${numAlt}-${perguntaId}" placeholder="Alternativa ${String.fromCharCode(65+numAlt)}"><input type="radio" name="correta-${perguntaId}" value="${numAlt}"> ✅ Correta`;
             container.appendChild(altDiv);
         }
-
         function salvarProva() {
             const titulo = document.getElementById('tituloProva').value;
             const tempo = parseInt(document.getElementById('tempoProva').value);
-            
-            if (!titulo || !tempo) {
-                alert('⚠️ Preencha o título e o tempo da prova!');
-                return;
-            }
-            
+            if (!titulo || !tempo) { alert('Preencha título e tempo!'); return; }
             const perguntas = [];
             for (let i = 0; i < perguntaCount; i++) {
                 const texto = document.getElementById(`texto-${i}`).value;
                 if (!texto) continue;
-                
                 const alternativas = [];
                 let correta = null;
                 const radios = document.getElementsByName(`correta-${i}`);
-                
-                for (let r = 0; r < radios.length; r++) {
-                    if (radios[r].checked) correta = r;
-                }
-                
+                for (let r = 0; r < radios.length; r++) { if (radios[r].checked) correta = r; }
                 let altIndex = 0;
                 while (true) {
                     const alt = document.getElementById(`alt${altIndex}-${i}`);
                     if (!alt) break;
-                    if (alt.value) {
-                        alternativas.push(alt.value);
-                    }
+                    if (alt.value) alternativas.push(alt.value);
                     altIndex++;
                 }
-                
-                if (alternativas.length >= 2 && correta !== null) {
-                    perguntas.push({
-                        texto: texto,
-                        alternativas: alternativas,
-                        correta: correta
-                    });
-                }
+                if (alternativas.length >= 2 && correta !== null) { perguntas.push({ texto, alternativas, correta }); }
             }
-            
-            if (perguntas.length === 0) {
-                alert('⚠️ Adicione pelo menos uma pergunta com 2 alternativas!');
-                return;
-            }
-            
-            const novaProva = {
-                titulo: titulo,
-                tempo: tempo,
-                perguntas: perguntas,
-                resultados: []
-            };
-            
-            provas.push(novaProva);
+            if (perguntas.length === 0) { alert('Adicione pelo menos uma pergunta!'); return; }
+            provas.push({ titulo, tempo, perguntas, resultados: [] });
             localStorage.setItem('provas', JSON.stringify(provas));
-            
-            alert(`✅ Prova "${titulo}" salva com sucesso!\n\nCódigo: PROVA-${provas.length - 1 + 1000}`);
+            alert(`✅ Prova salva! Código: PROVA-${provas.length-1+1000}`);
             document.getElementById('formProva').style.display = 'none';
             carregarListaProvas();
             perguntaCount = 0;
             document.getElementById('tituloProva').value = '';
             document.getElementById('tempoProva').value = '';
         }
-
         function entrarProva() {
             const codigo = document.getElementById('codigoProva').value;
             const match = codigo.match(/PROVA-(\d+)/);
-            if (!match) {
-                alert('Código inválido! Use o formato: PROVA-1000');
-                return;
-            }
-            
+            if (!match) { alert('Código inválido! Use PROVA-1000'); return; }
             const index = parseInt(match[1]) - 1000;
-            
-            if (provas[index]) {
-                provaAtual = provas[index];
-                iniciarProva(index);
-            } else {
-                alert('❌ Código de prova inválido!');
-            }
+            if (provas[index]) { provaAtual = provas[index]; iniciarProva(index); }
+            else { alert('Código inválido!'); }
         }
-
         function iniciarProva(index) {
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('telaProva').style.display = 'block';
-            
             document.getElementById('tituloProvaAtual').innerText = provaAtual.titulo;
-            
             let questoesHTML = '';
             provaAtual.perguntas.forEach((pergunta, i) => {
-                questoesHTML += `
-                    <div class="questao" id="questao-${i}">
-                        <h3>${i+1}. ${pergunta.texto}</h3>
-                        ${pergunta.alternativas.map((alt, j) => `
-                            <div class="opcao" onclick="selecionarResposta(${i}, ${j})" id="opcao-${i}-${j}">
-                                <input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)} - ${alt}
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
+                questoesHTML += `<div class="questao" id="questao-${i}"><h3>${i+1}. ${pergunta.texto}</h3>${pergunta.alternativas.map((alt, j) => `<div class="opcao" onclick="selecionarResposta(${i}, ${j})" id="opcao-${i}-${j}"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)} - ${alt}</div>`).join('')}</div>`;
             });
-            
             document.getElementById('questoesProva').innerHTML = questoesHTML;
             respostasAluno = new Array(provaAtual.perguntas.length).fill(-1);
-            
-            // Anti-cola: tela cheia
-            document.documentElement.requestFullscreen().catch(err => {
-                console.log('Erro ao entrar em tela cheia:', err);
-            });
+            document.documentElement.requestFullscreen();
             document.body.classList.add('modo-prova');
-            
-            // Timer
             let tempoRestante = provaAtual.tempo * 60;
             const timerElement = document.getElementById('timer');
-            
             const timerInterval = setInterval(() => {
                 const minutos = Math.floor(tempoRestante / 60);
                 const segundos = tempoRestante % 60;
                 timerElement.textContent = `${minutos.toString().padStart(2,'0')}:${segundos.toString().padStart(2,'0')}`;
-                
-                if (tempoRestante <= 0) {
-                    clearInterval(timerInterval);
-                    alert('⏰ Tempo esgotado! Entregando prova...');
-                    entregarProva();
-                }
+                if (tempoRestante <= 0) { clearInterval(timerInterval); alert('Tempo esgotado!'); entregarProva(); }
                 tempoRestante--;
             }, 1000);
-            
             window.timerInterval = timerInterval;
-            
-            // Bloquear teclas
             document.addEventListener('keydown', bloquearTeclas);
             document.addEventListener('contextmenu', bloquearCliqueDireito);
         }
-
         function selecionarResposta(perguntaIndex, alternativaIndex) {
             respostasAluno[perguntaIndex] = alternativaIndex;
-            
             for (let i = 0; i < provaAtual.perguntas[perguntaIndex].alternativas.length; i++) {
                 const opcao = document.getElementById(`opcao-${perguntaIndex}-${i}`);
-                if (opcao) {
-                    opcao.style.background = i === alternativaIndex ? '#c3e0ff' : '';
-                }
+                if (opcao) opcao.style.background = i === alternativaIndex ? '#c3e0ff' : '';
             }
         }
-
         function bloquearTeclas(e) {
             if (e.ctrlKey || e.key === 'F12' || e.key === 'PrintScreen' || e.key === 'F5') {
                 e.preventDefault();
-                alert('🚫 Esta ação não é permitida durante a prova!');
-                return false;
+                alert('🚫 Ação não permitida durante a prova!');
             }
         }
-
-        function bloquearCliqueDireito(e) {
-            e.preventDefault();
-            return false;
-        }
-
+        function bloquearCliqueDireito(e) { e.preventDefault(); return false; }
         function entregarProva() {
             clearInterval(window.timerInterval);
             document.removeEventListener('keydown', bloquearTeclas);
             document.removeEventListener('contextmenu', bloquearCliqueDireito);
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            }
-            
+            if (document.fullscreenElement) document.exitFullscreen();
             let acertos = 0;
-            provaAtual.perguntas.forEach((pergunta, i) => {
-                if (respostasAluno[i] === pergunta.correta) acertos++;
-            });
-            
+            provaAtual.perguntas.forEach((pergunta, i) => { if (respostasAluno[i] === pergunta.correta) acertos++; });
             const nota = (acertos / provaAtual.perguntas.length) * 10;
-            
-            provaAtual.resultados.push({
-                data: new Date().toLocaleString(),
-                nota: nota,
-                acertos: acertos,
-                total: provaAtual.perguntas.length
-            });
+            provaAtual.resultados.push({ data: new Date().toLocaleString(), nota, acertos, total: provaAtual.perguntas.length });
             localStorage.setItem('provas', JSON.stringify(provas));
-            
             document.getElementById('telaProva').style.display = 'none';
             document.getElementById('telaResultado').style.display = 'block';
-            
-            document.getElementById('resultado').innerHTML = `
-                <h2>🎯 Sua nota: ${nota.toFixed(1)}</h2>
-                <p>✅ Acertos: ${acertos} de ${provaAtual.perguntas.length}</p>
-                <p>📊 Percentual: ${((acertos/provaAtual.perguntas.length)*100).toFixed(1)}%</p>
-                ${acertos >= (provaAtual.perguntas.length * 0.6) ? '<p style="color:green; font-size:18px;">🎉 PARABÉNS! Você foi aprovado!</p>' : '<p style="color:red; font-size:18px;">📚 Estude mais e tente novamente!</p>'}
-            `;
+            document.getElementById('resultado').innerHTML = `<h2>🎯 Nota: ${nota.toFixed(1)}</h2><p>✅ Acertos: ${acertos} de ${provaAtual.perguntas.length}</p>${acertos >= (provaAtual.perguntas.length * 0.6) ? '<p style="color:green;">🎉 Aprovado!</p>' : '<p style="color:red;">📚 Reprovado. Estude mais!</p>'}`;
         }
-
         function verResultados(index) {
             const prova = provas[index];
-            if (prova.resultados.length === 0) {
-                alert('Nenhum aluno fez esta prova ainda!');
-                return;
-            }
-            
-            let resultadosHTML = '<h2>📊 Resultados dos Alunos</h2>';
-            prova.resultados.forEach((r, i) => {
-                resultadosHTML += `
-                    <div style="background:#f0f0f0; padding:10px; margin:10px 0; border-radius:8px;">
-                        <strong>Prova ${i+1}</strong><br>
-                        📅 Data: ${r.data}<br>
-                        ⭐ Nota: ${r.nota.toFixed(1)}<br>
-                        ✅ Acertos: ${r.acertos}/${r.total}
-                    </div>
-                `;
-            });
-            
+            if (prova.resultados.length === 0) { alert('Nenhum resultado ainda!'); return; }
+            let resultadosHTML = '<h2>📊 Resultados</h2>';
+            prova.resultados.forEach((r, i) => { resultadosHTML += `<div style="background:#f0f0f0;padding:10px;margin:10px 0;border-radius:8px;"><strong>Aluno ${i+1}</strong><br>📅 ${r.data}<br>⭐ Nota: ${r.nota.toFixed(1)}<br>✅ ${r.acertos}/${r.total}</div>`; });
             document.getElementById('listaProvas').innerHTML = resultadosHTML + '<button onclick="carregarListaProvas()" class="btn-voltar">← Voltar</button>';
         }
-
-        function voltarInicio() {
-            location.reload();
-        }
+        function voltarInicio() { location.reload(); }
     </script>
 </body>
 </html>
