@@ -3,199 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prova Segura - Sistema Anti-Cola</title>
+    <title>Prova Segura - Com Upload de Arquivos</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        .container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 800px;
-            width: 100%;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        h2 {
-            color: #555;
-            margin: 20px 0;
-        }
-        .tipo-usuario {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-        .btn-professor, .btn-aluno {
-            padding: 15px 30px;
-            font-size: 18px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-        .btn-professor {
-            background: #4CAF50;
-            color: white;
-        }
-        .btn-aluno {
-            background: #2196F3;
-            color: white;
-        }
-        .btn-professor:hover, .btn-aluno:hover {
-            transform: translateY(-2px);
-        }
-        .input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-        .btn-entrar, .btn-criar, .btn-salvar, .btn-entregar, .btn-voltar {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .btn-adicionar {
-            background: #48bb78;
-            color: white;
-            padding: 10px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        .pergunta-item {
-            background: #f7f7f7;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-        }
-        .alternativa {
-            margin: 5px 0;
-            padding: 8px;
-            background: white;
-            border-radius: 5px;
-        }
-        .prova-container {
-            max-width: 800px;
-            margin: 20px auto;
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        .header-prova {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #eee;
-        }
-        .timer {
-            font-size: 24px;
-            font-weight: bold;
-            color: #e53e3e;
-        }
-        .questao {
-            margin: 30px 0;
-            padding: 20px;
-            background: #f7f7f7;
-            border-radius: 10px;
-        }
-        .opcao {
-            margin: 10px 0;
-            padding: 10px;
-            cursor: pointer;
-            border-radius: 8px;
-        }
-        .dica {
-            font-size: 12px;
-            color: #999;
-            text-align: center;
-            margin-top: 10px;
-        }
-        .modo-prova {
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-            background: #f0f0f0;
-            border-radius: 10px;
-            margin: 10px 0;
-        }
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .btn-gerar-ia {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background: #e91e63;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .textarea-material {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            min-height: 150px;
-            font-family: inherit;
-        }
-        .ia-box {
-            background: #f0f0ff;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .card { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 900px; width: 100%; }
+        h1 { color: #333; text-align: center; margin-bottom: 30px; }
+        h2 { color: #555; margin: 20px 0; }
+        .tipo-usuario { display: flex; gap: 20px; justify-content: center; margin-bottom: 30px; }
+        .btn-professor, .btn-aluno { padding: 15px 30px; font-size: 18px; border: none; border-radius: 10px; cursor: pointer; }
+        .btn-professor { background: #4CAF50; color: white; }
+        .btn-aluno { background: #2196F3; color: white; }
+        .input, .textarea-material { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .textarea-material { min-height: 150px; font-family: inherit; }
+        .btn-entrar, .btn-criar, .btn-salvar, .btn-entregar, .btn-voltar, .btn-gerar-ia, .btn-upload { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; color: white; }
+        .btn-entrar, .btn-criar, .btn-salvar, .btn-entregar, .btn-voltar { background: #667eea; }
+        .btn-gerar-ia { background: #e91e63; }
+        .btn-upload { background: #ff9800; }
+        .btn-adicionar { background: #48bb78; color: white; padding: 10px; margin: 10px 0; border: none; border-radius: 8px; cursor: pointer; }
+        .pergunta-item { background: #f7f7f7; padding: 15px; margin: 10px 0; border-radius: 10px; }
+        .alternativa { margin: 5px 0; padding: 8px; background: white; border-radius: 5px; }
+        .prova-container { max-width: 800px; margin: 20px auto; background: white; border-radius: 20px; padding: 30px; }
+        .header-prova { display: flex; justify-content: space-between; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+        .timer { font-size: 24px; font-weight: bold; color: #e53e3e; }
+        .questao { margin: 30px 0; padding: 20px; background: #f7f7f7; border-radius: 10px; }
+        .opcao { margin: 10px 0; padding: 10px; cursor: pointer; border-radius: 8px; }
+        .dica { font-size: 12px; color: #999; text-align: center; margin-top: 10px; }
+        .modo-prova { -webkit-user-select: none; user-select: none; }
+        .loading { display: none; text-align: center; padding: 20px; background: #f0f0f0; border-radius: 10px; margin: 10px 0; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .ia-box { background: #f0f0ff; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .file-info { background: #e8f5e9; padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -226,13 +66,19 @@
                 <h1>👨‍🏫 Painel do Professor</h1>
                 <div class="ia-box">
                     <h2>🤖 Gerar Prova com IA</h2>
-                    <p>Cole seu material didático e a IA cria as perguntas automaticamente!</p>
-                    <textarea id="materialIA" class="textarea-material" placeholder="Cole aqui o texto da sua matéria, apostila ou resumo..."></textarea>
+                    <p><strong>Opção 1:</strong> Cole o texto manualmente</p>
+                    <textarea id="materialIA" class="textarea-material" placeholder="Cole aqui o texto da sua matéria..."></textarea>
+                    
+                    <p><strong>Opção 2:</strong> Ou faça upload de um arquivo</p>
+                    <input type="file" id="arquivoUpload" accept=".txt,.pdf,.docx,.ppt,.pptx" class="input">
+                    <button onclick="uploadArquivo()" class="btn-upload">📁 Carregar Arquivo</button>
+                    <div id="fileInfo" class="file-info" style="display:none;"></div>
+                    
                     <input type="number" id="quantidadeQuestoes" placeholder="Quantidade de questões (padrão: 10)" class="input" value="10">
                     <button onclick="gerarProvaComIA()" class="btn-gerar-ia">✨ Gerar Prova com IA ✨</button>
                     <div id="loadingIA" class="loading">
                         <div class="spinner"></div>
-                        <p>IA está criando suas perguntas...</p>
+                        <p>Processando arquivo e gerando perguntas...</p>
                     </div>
                 </div>
                 <hr>
@@ -275,30 +121,89 @@
         let provas = JSON.parse(localStorage.getItem('provas')) || [];
         let provaAtual = null;
         let respostasAluno = [];
+        let textoExtraido = "";
         const SENHA_PROFESSOR = "professor123";
 
-        async function gerarProvaComIA() {
-            const material = document.getElementById('materialIA').value;
-            const quantidade = document.getElementById('quantidadeQuestoes').value || 10;
-            if (!material.trim()) {
-                alert('⚠️ Cole algum material didático primeiro!');
+        // Função para ler arquivo enviado
+        function uploadArquivo() {
+            const fileInput = document.getElementById('arquivoUpload');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('❌ Selecione um arquivo primeiro!');
                 return;
             }
+
             document.getElementById('loadingIA').style.display = 'block';
-            const prompt = `Crie ${quantidade} perguntas de múltipla escolha baseado neste texto: ${material.substring(0, 2000)}. Retorne APENAS JSON no formato: {"titulo":"titulo","perguntas":[{"texto":"pergunta","alternativas":["a","b","c","d"],"correta":0}]}`;
-            try {
-                await navigator.clipboard.writeText(prompt);
-                document.getElementById('loadingIA').style.display = 'none';
-                alert('✅ Prompt copiado! Abra o Copilot Chat (Ctrl+I), cole o prompt (Ctrl+V), depois cole o JSON gerado aqui.');
-                const jsonResposta = prompt("Cole o JSON gerado pelo Copilot:");
-                if (jsonResposta) {
-                    const provaGerada = JSON.parse(jsonResposta);
-                    preencherFormularioComProva(provaGerada);
-                }
-            } catch(e) {
-                document.getElementById('loadingIA').style.display = 'none';
-                alert('Erro: ' + e.message);
+            document.getElementById('fileInfo').style.display = 'none';
+
+            const fileName = file.name;
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+
+            if (fileExtension === 'txt') {
+                // Ler arquivo TXT
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    textoExtraido = e.target.result;
+                    mostrarInfoArquivo(fileName, textoExtraido.length);
+                    document.getElementById('materialIA').value = textoExtraido.substring(0, 500) + "...";
+                    document.getElementById('loadingIA').style.display = 'none';
+                };
+                reader.readAsText(file, 'UTF-8');
             }
+            else if (fileExtension === 'pdf') {
+                alert('📄 PDF detectado! Para extrair texto do PDF, use um conversor online como: ilovepdf.com (PDF para TXT). Após converter, faça upload do arquivo TXT.');
+                document.getElementById('loadingIA').style.display = 'none';
+            }
+            else if (fileExtension === 'docx') {
+                alert('📄 Word detectado! Para extrair texto, salve seu arquivo como .txt no Word (Arquivo > Salvar como > Tipo: Texto Puro .txt)');
+                document.getElementById('loadingIA').style.display = 'none';
+            }
+            else if (fileExtension === 'ppt' || fileExtension === 'pptx') {
+                alert('📊 PowerPoint detectado! Para extrair texto, salve como PDF e depois converta para TXT, ou copie o texto manualmente.');
+                document.getElementById('loadingIA').style.display = 'none';
+            }
+            else {
+                alert('Formato não suportado. Use: TXT, PDF, DOCX, PPT, PPTX');
+                document.getElementById('loadingIA').style.display = 'none';
+            }
+        }
+
+        function mostrarInfoArquivo(nome, tamanho) {
+            const infoDiv = document.getElementById('fileInfo');
+            infoDiv.innerHTML = `✅ Arquivo carregado: ${nome}<br>📝 Caracteres: ${tamanho}`;
+            infoDiv.style.display = 'block';
+        }
+
+        function gerarProvaComIA() {
+            let material = document.getElementById('materialIA').value;
+            const quantidade = document.getElementById('quantidadeQuestoes').value || 10;
+            
+            if (!material.trim()) {
+                alert('⚠️ Cole um material ou faça upload de um arquivo primeiro!');
+                return;
+            }
+
+            document.getElementById('loadingIA').style.display = 'block';
+            
+            const prompt = `Você é um professor especialista. Baseado neste texto, crie ${quantidade} perguntas de múltipla escolha com 4 alternativas cada. Retorne APENAS JSON no formato: {"titulo":"Título da Prova","perguntas":[{"texto":"Pergunta?","alternativas":["A","B","C","D"],"correta":0}]}
+
+Texto: ${material.substring(0, 3000)}`;
+
+            navigator.clipboard.writeText(prompt).then(() => {
+                document.getElementById('loadingIA').style.display = 'none';
+                alert('✅ Prompt copiado!\n\nAgora:\n1. Abra o ChatGPT ou Copilot Chat\n2. Cole o prompt (Ctrl+V)\n3. Copie o JSON gerado\n4. Cole abaixo');
+                
+                const jsonResposta = prompt("Cole aqui o JSON gerado pela IA:");
+                if (jsonResposta) {
+                    try {
+                        const provaGerada = JSON.parse(jsonResposta);
+                        preencherFormularioComProva(provaGerada);
+                    } catch(e) {
+                        alert('❌ JSON inválido! Verifique se copiou exatamente o que a IA gerou.');
+                    }
+                }
+            });
         }
 
         function preencherFormularioComProva(provaGerada) {
@@ -307,6 +212,7 @@
             document.getElementById('tituloProva').value = provaGerada.titulo || "Prova Gerada por IA";
             document.getElementById('tempoProva').value = 30;
             perguntaCount = 0;
+            
             provaGerada.perguntas.forEach((pergunta, idx) => {
                 const div = document.getElementById('perguntas');
                 const perguntaDiv = document.createElement('div');
