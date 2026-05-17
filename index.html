@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prova Segura - Com Upload de Arquivos</title>
+    <title>Prova Segura - Extração Automática de Arquivos</title>
+    <!-- Bibliotecas para extrair texto de arquivos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.16/mammoth.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pptxtojson@2.0.0/dist/pptxtojson.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
@@ -69,16 +73,16 @@
                     <p><strong>Opção 1:</strong> Cole o texto manualmente</p>
                     <textarea id="materialIA" class="textarea-material" placeholder="Cole aqui o texto da sua matéria..."></textarea>
                     
-                    <p><strong>Opção 2:</strong> Ou faça upload de um arquivo</p>
-                    <input type="file" id="arquivoUpload" accept=".txt,.pdf,.docx,.ppt,.pptx" class="input">
-                    <button onclick="uploadArquivo()" class="btn-upload">📁 Carregar Arquivo</button>
+                    <p><strong>Opção 2:</strong> Ou faça upload de um arquivo (PPTX, DOCX, PDF ou TXT) - O SISTEMA EXTRAI O TEXTO AUTOMATICAMENTE!</p>
+                    <input type="file" id="arquivoUpload" accept=".txt,.pdf,.docx,.pptx" class="input">
+                    <button onclick="uploadArquivo()" class="btn-upload">📁 Carregar e Extrair Texto</button>
                     <div id="fileInfo" class="file-info" style="display:none;"></div>
                     
                     <input type="number" id="quantidadeQuestoes" placeholder="Quantidade de questões (padrão: 10)" class="input" value="10">
                     <button onclick="gerarProvaComIA()" class="btn-gerar-ia">✨ Gerar Prova com IA ✨</button>
                     <div id="loadingIA" class="loading">
                         <div class="spinner"></div>
-                        <p>Processando arquivo e gerando perguntas...</p>
+                        <p>Processando arquivo e extraindo texto...</p>
                     </div>
                 </div>
                 <hr>
@@ -124,8 +128,11 @@
         let textoExtraido = "";
         const SENHA_PROFESSOR = "professor123";
 
-        // Função para ler arquivo enviado
-        function uploadArquivo() {
+        // Configurar PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        // Função para extrair texto de diferentes tipos de arquivo
+        async function uploadArquivo() {
             const fileInput = document.getElementById('arquivoUpload');
             const file = fileInput.files[0];
             
@@ -140,69 +147,207 @@
             const fileName = file.name;
             const fileExtension = fileName.split('.').pop().toLowerCase();
 
-            if (fileExtension === 'txt') {
-                // Ler arquivo TXT
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    textoExtraido = e.target.result;
-                    mostrarInfoArquivo(fileName, textoExtraido.length);
-                    document.getElementById('materialIA').value = textoExtraido.substring(0, 500) + "...";
+            try {
+                let texto = "";
+
+                if (fileExtension === 'txt') {
+                    // TXT: leitura direta
+                    texto = await lerTXT(file);
+                }
+                else if (fileExtension === 'pdf') {
+                    // PDF: usar pdf.js
+                    texto = await lerPDF(file);
+                }
+                else if (fileExtension === 'docx') {
+                    // DOCX: usar mammoth.js [citation:3][citation:8]
+                    texto = await lerDOCX(file);
+                }
+                else if (fileExtension === 'pptx') {
+                    // PPTX: usar pptxtojson [citation:1]
+                    texto = await lerPPTX(file);
+                }
+                else {
+                    alert('Formato não suportado. Use: TXT, PDF, DOCX ou PPTX');
                     document.getElementById('loadingIA').style.display = 'none';
-                };
-                reader.readAsText(file, 'UTF-8');
-            }
-            else if (fileExtension === 'pdf') {
-                alert('📄 PDF detectado! Para extrair texto do PDF, use um conversor online como: ilovepdf.com (PDF para TXT). Após converter, faça upload do arquivo TXT.');
+                    return;
+                }
+
+                textoExtraido = texto;
+                
+                // Mostrar preview do texto extraído
+                const preview = texto.substring(0, 500) + (texto.length > 500 ? "..." : "");
+                document.getElementById('materialIA').value = preview;
+                
+                const infoDiv = document.getElementById('fileInfo');
+                infoDiv.innerHTML = `✅ Arquivo processado: ${fileName}<br>📝 Texto extraído: ${texto.length} caracteres<br>🔍 Preview: ${preview.substring(0, 100)}...`;
+                infoDiv.style.display = 'block';
+                
                 document.getElementById('loadingIA').style.display = 'none';
-            }
-            else if (fileExtension === 'docx') {
-                alert('📄 Word detectado! Para extrair texto, salve seu arquivo como .txt no Word (Arquivo > Salvar como > Tipo: Texto Puro .txt)');
+                alert(`✅ Texto extraído com sucesso!\n\nTotal de ${texto.length} caracteres extraídos.\n\nAgora clique em "Gerar Prova com IA" para criar as perguntas.`);
+                
+            } catch (error) {
                 document.getElementById('loadingIA').style.display = 'none';
-            }
-            else if (fileExtension === 'ppt' || fileExtension === 'pptx') {
-                alert('📊 PowerPoint detectado! Para extrair texto, salve como PDF e depois converta para TXT, ou copie o texto manualmente.');
-                document.getElementById('loadingIA').style.display = 'none';
-            }
-            else {
-                alert('Formato não suportado. Use: TXT, PDF, DOCX, PPT, PPTX');
-                document.getElementById('loadingIA').style.display = 'none';
+                alert('❌ Erro ao processar arquivo: ' + error.message);
+                console.error(error);
             }
         }
 
-        function mostrarInfoArquivo(nome, tamanho) {
-            const infoDiv = document.getElementById('fileInfo');
-            infoDiv.innerHTML = `✅ Arquivo carregado: ${nome}<br>📝 Caracteres: ${tamanho}`;
-            infoDiv.style.display = 'block';
+        function lerTXT(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('Erro ao ler TXT'));
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+
+        async function lerPDF(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const typedarray = new Uint8Array(e.target.result);
+                        const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+                        let textoCompleto = "";
+                        
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            const pageText = textContent.items.map(item => item.str).join(' ');
+                            textoCompleto += pageText + "\n";
+                        }
+                        
+                        resolve(textoCompleto);
+                    } catch (error) {
+                        reject(new Error('Erro ao extrair texto do PDF: ' + error.message));
+                    }
+                };
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo PDF'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        async function lerDOCX(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const arrayBuffer = e.target.result;
+                        const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                        resolve(result.value);
+                    } catch (error) {
+                        reject(new Error('Erro ao extrair texto do DOCX: ' + error.message));
+                    }
+                };
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo DOCX'));
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        async function lerPPTX(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const arrayBuffer = e.target.result;
+                        // Usar pptxtojson para extrair o texto dos slides [citation:1]
+                        const json = await pptxtojson.parse(arrayBuffer, {
+                            imageMode: 'none',
+                            videoMode: 'none',
+                            audioMode: 'none',
+                        });
+                        
+                        let textoCompleto = "";
+                        if (json.slides && json.slides.length > 0) {
+                            json.slides.forEach((slide, idx) => {
+                                textoCompleto += `--- Slide ${idx + 1} ---\n`;
+                                if (slide.elements) {
+                                    slide.elements.forEach(element => {
+                                        if (element.content) {
+                                            // Remove tags HTML do conteúdo
+                                            const textoSemHTML = element.content.replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+                                            if (textoSemHTML) {
+                                                textoCompleto += textoSemHTML + "\n";
+                                            }
+                                        }
+                                    });
+                                }
+                                textoCompleto += "\n";
+                            });
+                        }
+                        
+                        if (textoCompleto.trim() === "") {
+                            reject(new Error('Nenhum texto encontrado nos slides. O PowerPoint pode conter apenas imagens.'));
+                        }
+                        resolve(textoCompleto);
+                    } catch (error) {
+                        reject(new Error('Erro ao extrair texto do PPTX: ' + error.message));
+                    }
+                };
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo PPTX'));
+                reader.readAsArrayBuffer(file);
+            });
         }
 
         function gerarProvaComIA() {
             let material = document.getElementById('materialIA').value;
             const quantidade = document.getElementById('quantidadeQuestoes').value || 10;
             
-            if (!material.trim()) {
-                alert('⚠️ Cole um material ou faça upload de um arquivo primeiro!');
+            if (!material || material.trim() === "") {
+                alert('⚠️ Nenhum texto disponível! Faça upload de um arquivo ou cole um texto primeiro.');
                 return;
             }
 
             document.getElementById('loadingIA').style.display = 'block';
             
-            const prompt = `Você é um professor especialista. Baseado neste texto, crie ${quantidade} perguntas de múltipla escolha com 4 alternativas cada. Retorne APENAS JSON no formato: {"titulo":"Título da Prova","perguntas":[{"texto":"Pergunta?","alternativas":["A","B","C","D"],"correta":0}]}
+            const prompt = `Você é um professor especialista em criar provas. 
+Baseado no material abaixo, crie ${quantidade} perguntas de múltipla escolha.
 
-Texto: ${material.substring(0, 3000)}`;
+REGRAS OBRIGATÓRIAS:
+1. Cada pergunta deve ter 4 alternativas (A, B, C, D)
+2. Apenas uma alternativa correta por pergunta
+3. As alternativas erradas devem ser convincentes (distratores)
+4. Retorne APENAS o JSON, sem texto adicional
+
+FORMATO EXATO DE SAÍDA:
+{
+  "titulo": "Título da Prova",
+  "perguntas": [
+    {
+      "texto": "Enunciado da pergunta?",
+      "alternativas": ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],
+      "correta": 0
+    }
+  ]
+}
+
+MATERIAL PARA CRIAR AS QUESTÕES:
+${material.substring(0, 4000)}`;
 
             navigator.clipboard.writeText(prompt).then(() => {
                 document.getElementById('loadingIA').style.display = 'none';
-                alert('✅ Prompt copiado!\n\nAgora:\n1. Abra o ChatGPT ou Copilot Chat\n2. Cole o prompt (Ctrl+V)\n3. Copie o JSON gerado\n4. Cole abaixo');
+                alert('✅ Prompt copiado para área de transferência!\n\nAgora:\n1. Abra o ChatGPT ou Copilot Chat\n2. Cole o prompt (Ctrl+V)\n3. Copie o JSON gerado\n4. Clique em OK e cole o JSON');
                 
                 const jsonResposta = prompt("Cole aqui o JSON gerado pela IA:");
-                if (jsonResposta) {
+                if (jsonResposta && jsonResposta.trim()) {
                     try {
-                        const provaGerada = JSON.parse(jsonResposta);
+                        // Limpar possíveis marcações de código markdown
+                        let jsonLimpo = jsonResposta.trim();
+                        if (jsonLimpo.startsWith('```json')) {
+                            jsonLimpo = jsonLimpo.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+                        }
+                        if (jsonLimpo.startsWith('```')) {
+                            jsonLimpo = jsonLimpo.replace(/```\n?/g, '');
+                        }
+                        const provaGerada = JSON.parse(jsonLimpo);
                         preencherFormularioComProva(provaGerada);
                     } catch(e) {
-                        alert('❌ JSON inválido! Verifique se copiou exatamente o que a IA gerou.');
+                        alert('❌ JSON inválido! Verifique se copiou exatamente o que a IA gerou.\n\nErro: ' + e.message);
                     }
                 }
+            }).catch(() => {
+                document.getElementById('loadingIA').style.display = 'none';
+                alert('❌ Erro ao copiar para área de transferência. Tente novamente.');
             });
         }
 
@@ -213,20 +358,32 @@ Texto: ${material.substring(0, 3000)}`;
             document.getElementById('tempoProva').value = 30;
             perguntaCount = 0;
             
+            if (!provaGerada.perguntas || provaGerada.perguntas.length === 0) {
+                alert('⚠️ A IA não gerou perguntas válidas. Tente novamente.');
+                return;
+            }
+            
             provaGerada.perguntas.forEach((pergunta, idx) => {
                 const div = document.getElementById('perguntas');
                 const perguntaDiv = document.createElement('div');
                 perguntaDiv.className = 'pergunta-item';
                 perguntaDiv.id = `pergunta-${perguntaCount}`;
                 let alternativasHTML = '';
-                pergunta.alternativas.forEach((alt, altIdx) => {
-                    alternativasHTML += `<div class="alternativa"><input type="text" id="alt${altIdx}-${perguntaCount}" value="${alt.replace(/"/g, '&quot;')}" style="width:80%"><input type="radio" name="correta-${perguntaCount}" value="${altIdx}" ${pergunta.correta === altIdx ? 'checked' : ''}> ✅ Correta</div>`;
-                });
-                perguntaDiv.innerHTML = `<h3>📝 Pergunta ${perguntaCount + 1}</h3><input type="text" id="texto-${perguntaCount}" value="${pergunta.texto.replace(/"/g, '&quot;')}" class="input"><div id="alternativas-${perguntaCount}">${alternativasHTML}</div><button onclick="adicionarAlternativa(${perguntaCount})" class="btn-adicionar">+ Alternativa</button>`;
+                
+                if (pergunta.alternativas && pergunta.alternativas.length >= 2) {
+                    pergunta.alternativas.forEach((alt, altIdx) => {
+                        alternativasHTML += `<div class="alternativa"><input type="text" id="alt${altIdx}-${perguntaCount}" value="${String(alt).replace(/"/g, '&quot;')}" style="width:80%"><input type="radio" name="correta-${perguntaCount}" value="${altIdx}" ${pergunta.correta === altIdx ? 'checked' : ''}> ✅ Correta</div>`;
+                    });
+                } else {
+                    alternativasHTML = `<div class="alternativa"><input type="text" id="alt0-${perguntaCount}" placeholder="Alternativa A" style="width:80%"><input type="radio" name="correta-${perguntaCount}" value="0"> ✅ Correta</div>
+                                        <div class="alternativa"><input type="text" id="alt1-${perguntaCount}" placeholder="Alternativa B" style="width:80%"><input type="radio" name="correta-${perguntaCount}" value="1"> ✅ Correta</div>`;
+                }
+                
+                perguntaDiv.innerHTML = `<h3>📝 Pergunta ${perguntaCount + 1}</h3><input type="text" id="texto-${perguntaCount}" value="${String(pergunta.texto).replace(/"/g, '&quot;')}" class="input"><div id="alternativas-${perguntaCount}">${alternativasHTML}</div><button onclick="adicionarAlternativa(${perguntaCount})" class="btn-adicionar">+ Alternativa</button>`;
                 div.appendChild(perguntaDiv);
                 perguntaCount++;
             });
-            alert(`✅ ${provaGerada.perguntas.length} perguntas geradas! Revise e clique em Salvar Prova.`);
+            alert(`✅ ${provaGerada.perguntas.length} perguntas geradas! Revise, ajuste se necessário e clique em Salvar Prova.`);
         }
 
         function mostrarLoginProfessor() {
