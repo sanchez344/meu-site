@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>avalie.ai - Gerador de Provas com IA</title>
+    <title>avalie.ai - O gerador inteligente de provas online à prova de fraudes</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.16/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -11,26 +11,25 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
         .container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 950px; width: 100%; }
-        h1 { color: #333; text-align: center; margin-bottom: 5px; font-size: 2.5em; }
+        .card { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 900px; width: 100%; }
+        h1 { color: #333; text-align: center; margin-bottom: 10px; font-size: 2.5em; }
         .logo { text-align: center; margin-bottom: 5px; font-size: 3em; }
         .subtitulo { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; font-style: italic; }
-        h2 { color: #555; margin: 20px 0 10px 0; }
-        h3 { color: #777; margin: 10px 0; font-size: 16px; }
+        h2 { color: #555; margin: 20px 0; }
         .tipo-usuario { display: flex; gap: 20px; justify-content: center; margin-bottom: 30px; }
         .btn-professor, .btn-aluno { padding: 15px 30px; font-size: 18px; border: none; border-radius: 10px; cursor: pointer; transition: transform 0.2s; }
         .btn-professor { background: #4CAF50; color: white; }
         .btn-aluno { background: #2196F3; color: white; }
         .btn-professor:hover, .btn-aluno:hover { transform: scale(1.02); }
-        .input, .textarea-material, .textarea-prompt { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .input, .textarea-material, .input-api { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .input-api { background: #fff8e1; border-color: #ff9800; font-family: monospace; }
         .textarea-material { min-height: 150px; font-family: inherit; }
-        .textarea-prompt { min-height: 200px; font-family: 'Courier New', monospace; font-size: 12px; background: #f5f5f5; }
-        .btn-entrar, .btn-criar, .btn-salvar, .btn-entregar, .btn-voltar, .btn-gerar-prompt, .btn-upload, .btn-coletar-json { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; color: white; transition: opacity 0.2s; }
+        .btn-entrar, .btn-criar, .btn-salvar, .btn-entregar, .btn-voltar, .btn-gerar-ia, .btn-upload, .btn-salvar-api { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; color: white; transition: opacity 0.2s; }
         .btn-entrar, .btn-criar, .btn-salvar, .btn-entregar, .btn-voltar { background: #667eea; }
-        .btn-gerar-prompt { background: #e91e63; }
+        .btn-gerar-ia { background: #e91e63; }
         .btn-upload { background: #ff9800; }
-        .btn-coletar-json { background: #4CAF50; }
-        .btn-entrar:hover, .btn-criar:hover, .btn-salvar:hover, .btn-entregar:hover, .btn-voltar:hover, .btn-gerar-prompt:hover, .btn-upload:hover, .btn-coletar-json:hover { opacity: 0.9; }
+        .btn-salvar-api { background: #4CAF50; }
+        .btn-entrar:hover, .btn-criar:hover, .btn-salvar:hover, .btn-entregar:hover, .btn-voltar:hover, .btn-gerar-ia:hover, .btn-upload:hover, .btn-salvar-api:hover { opacity: 0.9; }
         .btn-adicionar { background: #48bb78; color: white; padding: 10px; margin: 10px 0; border: none; border-radius: 8px; cursor: pointer; }
         .pergunta-item { background: #f7f7f7; padding: 15px; margin: 10px 0; border-radius: 10px; }
         .alternativa { margin: 5px 0; padding: 8px; background: white; border-radius: 5px; }
@@ -48,12 +47,17 @@
         .ia-box { background: #f0f0ff; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
         .file-info { background: #e8f5e9; padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 14px; }
         .sucesso { color: green; font-weight: bold; }
-        .info-box { background: #e3f2fd; padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #2196F3; }
+        .erro { color: red; font-weight: bold; }
+        .config-box { background: #fff3e0; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #ff9800; }
+        .config-box a { color: #e65100; font-weight: bold; }
+        .api-status { font-size: 12px; margin-top: 5px; padding: 5px; border-radius: 5px; }
+        .api-status.valid { background: #d4edda; color: #155724; }
+        .api-status.invalid { background: #f8d7da; color: #721c24; }
         .flex-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .btn-pequeno { padding: 8px 15px; font-size: 14px; width: auto; margin: 0; }
         .header-avalia { text-align: center; margin-bottom: 20px; }
         .header-avalia h1 { color: #667eea; }
-        .code-block { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+        .gemini-note { font-size: 12px; color: #666; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -88,37 +92,38 @@
                 <h1>👨‍🏫 avalie.ai</h1>
                 <div class="subtitulo">Painel do Professor</div>
                 
-                <div class="ia-box">
-                    <h2>🤖 Método 1: Gerar Prova com IA (Recomendado)</h2>
+                <div class="config-box">
+                    <h3>🔑 Configurar IA (Google Gemini - Grátis)</h3>
+                    <p>📌 1. Acesse: <a href="https://aistudio.google.com/app/apikey" target="_blank">https://aistudio.google.com/app/apikey</a><br>
+                    📌 2. Faça login com sua conta Google<br>
+                    📌 3. Clique em "Create API Key"<br>
+                    📌 4. Copie a chave e cole abaixo<br>
+                    📌 5. A chave parece com: AIzaSy... (começa com AIza)</p>
                     
-                    <p><strong>📁 Passo 1:</strong> Faça upload do seu arquivo (PPTX, DOCX, PDF ou TXT)</p>
+                    <div class="flex-row">
+                        <input type="text" id="apiKey" class="input-api" placeholder="Cole sua chave API do Google Gemini aqui (começa com AIza...)" style="flex: 1;">
+                        <button onclick="salvarApiKey()" class="btn-salvar-api btn-pequeno">💾 Salvar</button>
+                    </div>
+                    <div id="statusApi" class="api-status"></div>
+                </div>
+                
+                <div class="ia-box">
+                    <h2>🤖 Gerar Prova com IA</h2>
+                    <p><strong>📝 Opção 1:</strong> Cole o texto manualmente</p>
+                    <textarea id="materialIA" class="textarea-material" placeholder="Cole aqui o texto da sua matéria..."></textarea>
+                    
+                    <p><strong>📁 Opção 2:</strong> Faça upload de arquivo (PPTX, DOCX, PDF ou TXT)</p>
                     <input type="file" id="arquivoUpload" accept=".txt,.pdf,.docx,.pptx" class="input">
                     <button onclick="uploadArquivo()" class="btn-upload">📂 Carregar e Extrair Texto</button>
                     <div id="fileInfo" class="file-info" style="display:none;"></div>
                     
-                    <p><strong>📝 Passo 2:</strong> Ou cole o texto manualmente</p>
-                    <textarea id="materialIA" class="textarea-material" placeholder="Cole aqui o texto da sua matéria..."></textarea>
-                    
-                    <p><strong>🔢 Passo 3:</strong> Quantidade de questões</p>
-                    <input type="number" id="quantidadeQuestoes" class="input" value="10">
-                    
-                    <button onclick="gerarPrompt()" class="btn-gerar-prompt">📋 GERAR PROMPT PARA IA</button>
-                    
-                    <div id="promptArea" style="display:none; margin-top: 20px;">
-                        <h3>✨ Copie o prompt abaixo e cole no ChatGPT, Gemini ou Copilot:</h3>
-                        <textarea id="promptTexto" class="textarea-prompt" readonly></textarea>
-                        <button onclick="copiarPrompt()" class="btn-pequeno" style="background:#2196F3; color:white; margin-top:5px;">📋 Copiar Prompt</button>
-                        
-                        <h3 style="margin-top:20px;">📥 Depois que a IA gerar o JSON, cole aqui:</h3>
-                        <textarea id="jsonResposta" class="textarea-material" placeholder="Cole o JSON gerado pela IA aqui..."></textarea>
-                        <button onclick="processarJSON()" class="btn-coletar-json">✅ PROCESSAR JSON E CRIAR PROVA</button>
+                    <input type="number" id="quantidadeQuestoes" placeholder="Quantidade de questões" class="input" value="10">
+                    <button onclick="gerarProvaComIA()" class="btn-gerar-ia">✨ GERAR PROVA COM IA ✨</button>
+                    <div id="loadingIA" class="loading">
+                        <div class="spinner"></div>
+                        <p>🧠 IA (Gemini) está analisando seu material e criando as perguntas... Aguarde 15-30 segundos</p>
                     </div>
                 </div>
-                
-                <div class="info-box">
-                    <strong>💡 Dica:</strong> Use o Gemini (grátis) em <a href="https://gemini.google.com" target="_blank">gemini.google.com</a> ou o ChatGPT. Cole o prompt gerado, ele vai criar o JSON para você!
-                </div>
-                
                 <hr>
                 <button onclick="criarNovaProva()" class="btn-criar">✏️ Criar Prova Manualmente</button>
                 <div id="listaProvas"></div>
@@ -141,7 +146,7 @@
                 <div class="timer">⏱️ Tempo: <span id="timer">00:00</span></div>
             </div>
             <div id="questoesProva"></div>
-            <button onclick="entregarProva()" class="btn-entregar">📤 Entregar Prova</button>
+            <button onclick="entregarProva()" class="btn-entrar">📤 Entregar Prova</button>
         </div>
     </div>
 
@@ -160,9 +165,41 @@
         let provaAtual = null;
         let respostasAluno = [];
         let textoExtraido = "";
+        let API_KEY = localStorage.getItem('gemini_api_key') || "";
         const SENHA_PROFESSOR = "professor123";
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        function atualizarStatusApi() {
+            const statusDiv = document.getElementById('statusApi');
+            if (API_KEY && API_KEY.length > 10 && API_KEY.startsWith('AIza')) {
+                statusDiv.innerHTML = '✅ Chave API Gemini configurada! Pronto para gerar provas automaticamente.';
+                statusDiv.className = 'api-status valid';
+                if (document.getElementById('apiKey')) {
+                    document.getElementById('apiKey').value = API_KEY;
+                }
+            } else if (API_KEY && API_KEY.length > 10) {
+                statusDiv.innerHTML = '⚠️ Chave parece válida, mas não começa com AIza. Verifique se copiou corretamente.';
+                statusDiv.className = 'api-status invalid';
+            } else {
+                statusDiv.innerHTML = '⚠️ Nenhuma chave API configurada. Configure acima para gerar provas automaticamente.';
+                statusDiv.className = 'api-status invalid';
+            }
+        }
+
+        function salvarApiKey() {
+            const inputElement = document.getElementById('apiKey');
+            const key = inputElement.value.trim();
+            
+            if (key && key.length > 10) {
+                localStorage.setItem('gemini_api_key', key);
+                API_KEY = key;
+                atualizarStatusApi();
+                alert('✅ Chave API Gemini salva com sucesso! Agora você pode gerar provas automaticamente.');
+            } else {
+                alert('❌ Por favor, cole uma chave API válida (deve ter mais de 10 caracteres)');
+            }
+        }
 
         async function uploadArquivo() {
             const fileInput = document.getElementById('arquivoUpload');
@@ -184,10 +221,11 @@
                 else { alert('Formato não suportado'); document.getElementById('loadingIA').style.display = 'none'; return; }
 
                 textoExtraido = texto;
-                document.getElementById('materialIA').value = texto;
-                document.getElementById('fileInfo').innerHTML = `✅ Arquivo processado: ${fileName}<br>📝 Texto extraído: ${texto.length} caracteres<br>🔍 Agora clique em "GERAR PROMPT PARA IA"`;
+                document.getElementById('materialIA').value = texto.substring(0, 800);
+                document.getElementById('fileInfo').innerHTML = `✅ Arquivo processado: ${fileName}<br>📝 Texto extraído: ${texto.length} caracteres<br>🔍 Agora clique em "GERAR PROVA COM IA"`;
                 document.getElementById('fileInfo').style.display = 'block';
                 document.getElementById('loadingIA').style.display = 'none';
+                alert(`✅ Texto extraído! ${texto.length} caracteres. Clique em "GERAR PROVA COM IA" para criar as perguntas.`);
             } catch (error) {
                 document.getElementById('loadingIA').style.display = 'none';
                 document.getElementById('fileInfo').innerHTML = `❌ Erro: ${error.message}`;
@@ -260,8 +298,8 @@
             });
         }
 
-        function gerarPrompt() {
-            let material = document.getElementById('materialIA').value;
+        async function gerarProvaComIA() {
+            const material = document.getElementById('materialIA').value;
             const quantidade = document.getElementById('quantidadeQuestoes').value || 10;
             
             if (!material || material.trim() === "") {
@@ -269,66 +307,69 @@
                 return;
             }
 
-            const prompt = `Crie exatamente ${quantidade} perguntas de múltipla escolha sobre o assunto abaixo.
-
-REGRAS:
-1. Cada pergunta deve ter 4 alternativas (A, B, C, D)
-2. Apenas uma alternativa correta por pergunta
-3. O índice "correta" deve ser: 0 para A, 1 para B, 2 para C, 3 para D
-4. Responda APENAS com JSON, sem texto adicional
-
-FORMATO EXATO:
-{
-  "titulo": "Título da Prova",
-  "perguntas": [
-    {
-      "texto": "Enunciado da pergunta?",
-      "alternativas": ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],
-      "correta": 0
-    }
-  ]
-}
-
-ASSUNTO:
-${material.substring(0, 4000)}`;
-
-            document.getElementById('promptTexto').value = prompt;
-            document.getElementById('promptArea').style.display = 'block';
-            
-            // Rolar para a área do prompt
-            document.getElementById('promptArea').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function copiarPrompt() {
-            const promptText = document.getElementById('promptTexto');
-            promptText.select();
-            document.execCommand('copy');
-            alert('✅ Prompt copiado! Agora cole no ChatGPT ou Gemini para gerar as perguntas.');
-        }
-
-        function processarJSON() {
-            const jsonText = document.getElementById('jsonResposta').value;
-            
-            if (!jsonText || jsonText.trim() === "") {
-                alert('⚠️ Cole o JSON gerado pela IA primeiro!');
+            if (!API_KEY || API_KEY.length < 10) {
+                alert('⚠️ Configure sua chave API do Google Gemini na caixa laranja acima!\n\nAcesse: aistudio.google.com/app/apikey');
                 return;
             }
 
-            try {
-                let jsonLimpo = jsonText.trim();
-                jsonLimpo = jsonLimpo.replace(/```json\n?/g, '').replace(/```\n?/g, '').replace(/```/g, '');
-                const provaGerada = JSON.parse(jsonLimpo);
-                
-                if (!provaGerada.perguntas || provaGerada.perguntas.length === 0) {
-                    alert('❌ JSON inválido: não contém perguntas.');
-                    return;
+            document.getElementById('loadingIA').style.display = 'block';
+
+            const prompt = `Crie exatamente ${quantidade} perguntas de múltipla escolha sobre o assunto abaixo. 
+Cada pergunta deve ter 4 alternativas (A, B, C, D) e apenas uma correta (0,1,2 ou 3 onde 0 é A, 1 é B, 2 é C, 3 é D).
+Responda APENAS com JSON válido neste formato estruturado, sem blocos de markdown adicionais: 
+{"titulo":"Título da Prova","perguntas":[{"texto":"Pergunta?","alternativas":["Alternativa A","Alternativa B","Alternativa C","Alternativa D"],"correta":0}]}
+
+Assunto: ${material.substring(0, 3000)}`;
+
+            const models = [
+                'gemini-1.5-flash',
+                'gemini-1.5-pro',
+                'gemini-2.0-flash-exp'
+            ];
+            
+            let ultimoErro = null;
+            
+            for (const model of models) {
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{ text: prompt }]
+                            }],
+                            generationConfig: {
+                                responseMimeType: "application/json"
+                            }
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.error) {
+                        ultimoErro = new Error(data.error.message);
+                        continue;
+                    }
+
+                    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                        let textoResposta = data.candidates[0].content.parts[0].text;
+                        textoResposta = textoResposta.replace(/```json\n?/g, '').replace(/```\n?/g, '').replace(/```/g, '').trim();
+                        const provaGerada = JSON.parse(textoResposta);
+                        
+                        if (provaGerada.perguntas && provaGerada.perguntas.length > 0) {
+                            document.getElementById('loadingIA').style.display = 'none';
+                            preencherFormularioComProva(provaGerada);
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    ultimoErro = e;
+                    continue;
                 }
-                
-                preencherFormularioComProva(provaGerada);
-                document.getElementById('jsonResposta').value = '';
-            } catch (e) {
-                alert('❌ JSON inválido! Verifique se você copiou corretamente o que a IA gerou.\n\nErro: ' + e.message);
             }
+            
+            document.getElementById('loadingIA').style.display = 'none';
+            alert('❌ Não foi possível gerar a prova. Verifique sua chave API Gemini e tente novamente.\n\n' + (ultimoErro ? ultimoErro.message : ''));
         }
 
         function preencherFormularioComProva(provaGerada) {
@@ -337,6 +378,11 @@ ${material.substring(0, 4000)}`;
             document.getElementById('tituloProva').value = provaGerada.titulo || "Prova Gerada por IA";
             document.getElementById('tempoProva').value = 30;
             perguntaCount = 0;
+            
+            if (!provaGerada.perguntas || provaGerada.perguntas.length === 0) {
+                alert('❌ A IA não gerou perguntas. Tente novamente.');
+                return;
+            }
             
             provaGerada.perguntas.forEach((pergunta) => {
                 const div = document.getElementById('perguntas');
@@ -359,7 +405,6 @@ ${material.substring(0, 4000)}`;
                 perguntaCount++;
             });
             alert(`✅ ${provaGerada.perguntas.length} perguntas geradas com sucesso! Revise e clique em "Salvar Prova".`);
-            document.getElementById('promptArea').style.display = 'none';
         }
 
         function mostrarLoginProfessor() {
@@ -376,6 +421,10 @@ ${material.substring(0, 4000)}`;
                 document.getElementById('telaLogin').style.display = 'none';
                 document.getElementById('painelProfessor').style.display = 'block';
                 carregarListaProvas();
+                atualizarStatusApi();
+                if (API_KEY && document.getElementById('apiKey')) {
+                    document.getElementById('apiKey').value = API_KEY;
+                }
             } else { alert('Senha incorreta! Use: professor123'); }
         }
         function carregarListaProvas() {
@@ -388,128 +437,3 @@ ${material.substring(0, 4000)}`;
         }
         function criarNovaProva() {
             document.getElementById('formProva').style.display = 'block';
-            document.getElementById('perguntas').innerHTML = '';
-            adicionarPergunta();
-        }
-        let perguntaCount = 0;
-        function adicionarPergunta() {
-            const div = document.getElementById('perguntas');
-            const perguntaDiv = document.createElement('div');
-            perguntaDiv.className = 'pergunta-item';
-            perguntaDiv.id = `pergunta-${perguntaCount}`;
-            perguntaDiv.innerHTML = `<h3>📝 Pergunta ${perguntaCount+1}</h3><input type="text" id="texto-${perguntaCount}" placeholder="Digite o enunciado da pergunta" class="input"><div id="alternativas-${perguntaCount}"><div class="alternativa"><input type="text" id="alt0-${perguntaCount}" placeholder="Alternativa A"><input type="radio" name="correta-${perguntaCount}" value="0"> ✅ Correta</div><div class="alternativa"><input type="text" id="alt1-${perguntaCount}" placeholder="Alternativa B"><input type="radio" name="correta-${perguntaCount}" value="1"> ✅ Correta</div></div><button onclick="adicionarAlternativa(${perguntaCount})" class="btn-adicionar">+ Adicionar Alternativa</button>`;
-            div.appendChild(perguntaDiv);
-            perguntaCount++;
-        }
-        function adicionarAlternativa(perguntaId) {
-            const container = document.getElementById(`alternativas-${perguntaId}`);
-            const numAlt = container.children.length;
-            const altDiv = document.createElement('div');
-            altDiv.className = 'alternativa';
-            altDiv.innerHTML = `<input type="text" id="alt${numAlt}-${perguntaId}" placeholder="Alternativa ${String.fromCharCode(65+numAlt)}"><input type="radio" name="correta-${perguntaId}" value="${numAlt}"> ✅ Correta`;
-            container.appendChild(altDiv);
-        }
-        function salvarProva() {
-            const titulo = document.getElementById('tituloProva').value;
-            const tempo = parseInt(document.getElementById('tempoProva').value);
-            if (!titulo || !tempo) { alert('⚠️ Preencha o título e o tempo da prova!'); return; }
-            const perguntas = [];
-            for (let i = 0; i < perguntaCount; i++) {
-                const texto = document.getElementById(`texto-${i}`).value;
-                if (!texto) continue;
-                const alternativas = [];
-                let correta = null;
-                const radios = document.getElementsByName(`correta-${i}`);
-                for (let r = 0; r < radios.length; r++) { if (radios[r].checked) correta = r; }
-                let altIndex = 0;
-                while (true) {
-                    const alt = document.getElementById(`alt${altIndex}-${i}`);
-                    if (!alt) break;
-                    if (alt.value) alternativas.push(alt.value);
-                    altIndex++;
-                }
-                if (alternativas.length >= 2 && correta !== null) { perguntas.push({ texto, alternativas, correta }); }
-            }
-            if (perguntas.length === 0) { alert('⚠️ Adicione pelo menos uma pergunta!'); return; }
-            provas.push({ titulo, tempo, perguntas, resultados: [] });
-            localStorage.setItem('provas', JSON.stringify(provas));
-            alert(`✅ Prova "${titulo}" salva com sucesso!\n\nCódigo: PROVA-${provas.length-1+1000}`);
-            document.getElementById('formProva').style.display = 'none';
-            carregarListaProvas();
-            perguntaCount = 0;
-            document.getElementById('tituloProva').value = '';
-            document.getElementById('tempoProva').value = '';
-        }
-        function entrarProva() {
-            const codigo = document.getElementById('codigoProva').value;
-            const match = codigo.match(/PROVA-(\d+)/);
-            if (!match) { alert('❌ Código inválido! Use o formato: PROVA-1000'); return; }
-            const index = parseInt(match[1]) - 1000;
-            if (provas[index]) { provaAtual = provas[index]; iniciarProva(index); }
-            else { alert('❌ Código de prova inválido!'); }
-        }
-        function iniciarProva(index) {
-            document.getElementById('telaLogin').style.display = 'none';
-            document.getElementById('telaProva').style.display = 'block';
-            document.getElementById('tituloProvaAtual').innerText = provaAtual.titulo;
-            let questoesHTML = '';
-            provaAtual.perguntas.forEach((pergunta, i) => {
-                questoesHTML += `<div class="questao" id="questao-${i}"><h3>${i+1}. ${pergunta.texto}</h3>${pergunta.alternativas.map((alt, j) => `<div class="opcao" onclick="selecionarResposta(${i}, ${j})" id="opcao-${i}-${j}"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)} - ${alt}</div>`).join('')}</div>`;
-            });
-            document.getElementById('questoesProva').innerHTML = questoesHTML;
-            respostasAluno = new Array(provaAtual.perguntas.length).fill(-1);
-            document.documentElement.requestFullscreen();
-            document.body.classList.add('modo-prova');
-            let tempoRestante = provaAtual.tempo * 60;
-            const timerElement = document.getElementById('timer');
-            const timerInterval = setInterval(() => {
-                const minutos = Math.floor(tempoRestante / 60);
-                const segundos = tempoRestante % 60;
-                timerElement.textContent = `${minutos.toString().padStart(2,'0')}:${segundos.toString().padStart(2,'0')}`;
-                if (tempoRestante <= 0) { clearInterval(timerInterval); alert('⏰ Tempo esgotado!'); entregarProva(); }
-                tempoRestante--;
-            }, 1000);
-            window.timerInterval = timerInterval;
-            document.addEventListener('keydown', bloquearTeclas);
-            document.addEventListener('contextmenu', bloquearCliqueDireito);
-        }
-        function selecionarResposta(perguntaIndex, alternativaIndex) {
-            respostasAluno[perguntaIndex] = alternativaIndex;
-            for (let i = 0; i < provaAtual.perguntas[perguntaIndex].alternativas.length; i++) {
-                const opcao = document.getElementById(`opcao-${perguntaIndex}-${i}`);
-                if (opcao) opcao.style.background = i === alternativaIndex ? '#c3e0ff' : '';
-            }
-        }
-        function bloquearTeclas(e) {
-            if (e.ctrlKey || e.key === 'F12' || e.key === 'PrintScreen' || e.key === 'F5') {
-                e.preventDefault();
-                alert('🚫 Ação não permitida durante a prova!');
-                return false;
-            }
-        }
-        function bloquearCliqueDireito(e) { e.preventDefault(); return false; }
-        function entregarProva() {
-            clearInterval(window.timerInterval);
-            document.removeEventListener('keydown', bloquearTeclas);
-            document.removeEventListener('contextmenu', bloquearCliqueDireito);
-            if (document.fullscreenElement) document.exitFullscreen();
-            let acertos = 0;
-            provaAtual.perguntas.forEach((pergunta, i) => { if (respostasAluno[i] === pergunta.correta) acertos++; });
-            const nota = (acertos / provaAtual.perguntas.length) * 10;
-            provaAtual.resultados.push({ data: new Date().toLocaleString(), nota, acertos, total: provaAtual.perguntas.length });
-            localStorage.setItem('provas', JSON.stringify(provas));
-            document.getElementById('telaProva').style.display = 'none';
-            document.getElementById('telaResultado').style.display = 'block';
-            document.getElementById('resultado').innerHTML = `<h2>🎯 Nota: ${nota.toFixed(1)}</h2><p>✅ Acertos: ${acertos} de ${provaAtual.perguntas.length}</p><p>📊 Percentual: ${((acertos/provaAtual.perguntas.length)*100).toFixed(1)}%</p>${acertos >= (provaAtual.perguntas.length * 0.6) ? '<p style="color:green;font-size:18px;">🎉 PARABÉNS! Aprovado!</p>' : '<p style="color:red;font-size:18px;">📚 Estude mais e tente novamente!</p>'}`;
-        }
-        function verResultados(index) {
-            const prova = provas[index];
-            if (prova.resultados.length === 0) { alert('Nenhum aluno fez esta prova ainda!'); return; }
-            let resultadosHTML = '<h2>📊 Resultados dos Alunos</h2>';
-            prova.resultados.forEach((r, i) => { resultadosHTML += `<div style="background:#f0f0f0;padding:10px;margin:10px 0;border-radius:8px;"><strong>Aluno ${i+1}</strong><br>📅 Data: ${r.data}<br>⭐ Nota: ${r.nota.toFixed(1)}<br>✅ Acertos: ${r.acertos}/${r.total}</div>`; });
-            document.getElementById('listaProvas').innerHTML = resultadosHTML + '<button onclick="carregarListaProvas()" class="btn-voltar">← Voltar</button>';
-        }
-        function voltarInicio() { location.reload(); }
-    </script>
-</body>
-</html>
