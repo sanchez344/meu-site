@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.16/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
+        /* [MANTER TODO O CSS ORIGINAL AQUI - sem alterações] */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
         .container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
@@ -53,6 +54,7 @@
     </style>
 </head>
 <body>
+    <!-- [MANTER TODO O HTML ORIGINAL AQUI - sem alterações] -->
     <div id="telaLogin" class="container">
         <div class="card">
             <div class="logo">📚🤖</div>
@@ -153,6 +155,8 @@
     </div>
 
     <script>
+        // ===== CORREÇÕES PRINCIPAIS AQUI =====
+        
         let provas = JSON.parse(localStorage.getItem('provas')) || [];
         let provaAtual = null;
         let respostasAluno = [];
@@ -161,12 +165,52 @@
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
+        // Função para testar a API key antes de usar
+        async function testarApiKey() {
+            if (!API_KEY || !API_KEY.startsWith('AIza')) {
+                return { valida: false, erro: 'Chave API inválida ou não configurada' };
+            }
+            
+            try {
+                // Testa com um modelo que sabemos que existe
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash?key=${API_KEY}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    return { valida: true, modelo: 'gemini-2.0-flash' };
+                } else if (data.error && data.error.status === 'PERMISSION_DENIED') {
+                    return { valida: false, erro: 'Chave API não autorizada. Verifique se ativou a API no Google Cloud Console' };
+                } else {
+                    return { valida: false, erro: data.error?.message || 'Erro desconhecido' };
+                }
+            } catch (error) {
+                return { valida: false, erro: 'Erro de conexão: ' + error.message };
+            }
+        }
+
         function atualizarStatus() {
             const div = document.getElementById('statusApi');
+            if (!div) return;
+            
             if (API_KEY && API_KEY.startsWith('AIza')) {
-                div.innerHTML = '✅ Chave API configurada! Pronto para gerar provas.';
-                div.className = 'api-status valid';
-                if(document.getElementById('apiKey')) document.getElementById('apiKey').value = API_KEY;
+                div.innerHTML = '🔄 Verificando chave API...';
+                div.className = 'api-status';
+                
+                // Teste assíncrono da chave
+                testarApiKey().then(result => {
+                    if (result.valida) {
+                        div.innerHTML = `✅ Chave API válida! Modelo disponível: ${result.modelo}`;
+                        div.className = 'api-status valid';
+                    } else {
+                        div.innerHTML = `❌ ${result.erro}`;
+                        div.className = 'api-status invalid';
+                    }
+                });
+                
+                if(document.getElementById('apiKey')) {
+                    document.getElementById('apiKey').value = API_KEY;
+                }
             } else {
                 div.innerHTML = '⚠️ Cole sua chave API acima (começa com AIza)';
                 div.className = 'api-status invalid';
@@ -175,16 +219,17 @@
 
         function salvarApiKey() {
             const key = document.getElementById('apiKey').value.trim();
-            if(key && key.length > 10) {
+            if(key && key.length > 10 && key.startsWith('AIza')) {
                 localStorage.setItem('gemini_key', key);
                 API_KEY = key;
                 atualizarStatus();
-                alert('✅ Chave salva! Agora clique em GERAR PROVA');
+                alert('✅ Chave salva com sucesso! Verificando validade...');
             } else {
-                alert('❌ Cole uma chave válida');
+                alert('❌ Chave inválida! Deve começar com "AIza" e ter pelo menos 10 caracteres');
             }
         }
 
+        // [MANTER TODAS AS FUNÇÕES DE UPLOAD ORIGINAIS - sem alterações]
         async function uploadArquivo() {
             const file = document.getElementById('arquivoUpload').files[0];
             if(!file) { alert('Selecione um arquivo'); return; }
@@ -209,7 +254,7 @@
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = e => resolve(e.target.result);
-                reader.onerror = () => reject(new Error('Erro'));
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo TXT'));
                 reader.readAsText(file, 'UTF-8');
             });
         }
@@ -269,70 +314,147 @@
             });
         }
 
+        // FUNÇÃO PRINCIPAL CORRIGIDA - GERAR PROVA COM IA
         async function gerarProvaComIA() {
             const material = document.getElementById('materialIA').value;
-            const qtd = document.getElementById('quantidadeQuestoes').value || 10;
+            const qtd = parseInt(document.getElementById('quantidadeQuestoes').value) || 10;
             
-            if(!material.trim()) { alert('Cole um texto ou faça upload!'); return; }
-            if(!API_KEY) { alert('Configure sua chave API primeiro!'); return; }
+            // Validações
+            if(!material.trim()) { 
+                alert('❌ Cole um texto ou faça upload de um arquivo!'); 
+                return; 
+            }
+            
+            if(!API_KEY || !API_KEY.startsWith('AIza')) { 
+                alert('❌ Configure sua chave API primeiro! (Deve começar com AIza)'); 
+                return; 
+            }
 
             document.getElementById('loadingIA').style.display = 'block';
 
-            const prompt = `Crie ${qtd} perguntas de múltipla escolha com 4 alternativas. Responda APENAS JSON: {"titulo":"Título","perguntas":[{"texto":"Pergunta?","alternativas":["A","B","C","D"],"correta":0}]}
+            const prompt = `Crie ${qtd} perguntas de múltipla escolha com 4 alternativas cada. 
+Responda APENAS com um objeto JSON válido no seguinte formato:
+{
+  "titulo": "Título da Prova",
+  "perguntas": [
+    {
+      "texto": "Pergunta?",
+      "alternativas": ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],
+      "correta": 0
+    }
+  ]
+}
 
-Material: ${material.substring(0, 3000)}`;
+Material de estudo:
+${material.substring(0, 5000)}`;
 
-            // Modelo correto do Gemini (maio/2026)
-            const model = 'gemini-1.5-flash';
+            // Lista de modelos para tentar (do mais recente ao mais antigo)
+            const modelos = [
+                'gemini-2.0-flash',
+                'gemini-2.0-flash-lite',
+                'gemini-1.5-flash',
+                'gemini-1.5-pro',
+                'gemini-pro'
+            ];
             
-            try {
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        contents: [{ 
-                            parts: [{ text: prompt }] 
-                        }] 
-                    })
-                });
-                
-                const data = await response.json();
-                document.getElementById('loadingIA').style.display = 'none';
-                
-                if(data.error) {
-                    if(data.error.message.includes('not found')) {
-                        alert('❌ Erro: Modelo não encontrado. Verifique se você ativou a API no Google Cloud.\n\nLink: https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com');
-                    } else if(data.error.message.includes('API key')) {
-                        alert('❌ Chave API inválida. Gere uma nova chave em: https://aistudio.google.com/app/apikey');
-                    } else {
-                        alert('❌ Erro: ' + data.error.message);
+            let sucesso = false;
+            let ultimoErro = '';
+            
+            for (const modelo of modelos) {
+                try {
+                    console.log(`Tentando modelo: ${modelo}...`);
+                    
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${API_KEY}`;
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            contents: [{ 
+                                parts: [{ text: prompt }] 
+                            }],
+                            generationConfig: {
+                                temperature: 0.7,
+                                maxOutputTokens: 2048
+                            }
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        const erroMsg = data.error?.message || 'Erro desconhecido';
+                        console.log(`Modelo ${modelo} falhou: ${erroMsg}`);
+                        
+                        if (data.error?.status === 'NOT_FOUND') {
+                            ultimoErro = erroMsg;
+                            continue; // Tenta próximo modelo
+                        } else if (data.error?.status === 'PERMISSION_DENIED') {
+                            throw new Error('API não autorizada. Ative a Generative Language API no Google Cloud Console.');
+                        } else if (data.error?.status === 'INVALID_ARGUMENT') {
+                            throw new Error('Chave API inválida. Gere uma nova em: https://aistudio.google.com/app/apikey');
+                        } else {
+                            ultimoErro = erroMsg;
+                            continue;
+                        }
                     }
-                    return;
+                    
+                    // Sucesso!
+                    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                        let texto = data.candidates[0].content.parts[0].text;
+                        
+                        // Limpa possíveis marcadores de código
+                        texto = texto.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+                        
+                        // Tenta fazer parse do JSON
+                        try {
+                            const prova = JSON.parse(texto);
+                            
+                            if (!prova.perguntas || prova.perguntas.length === 0) {
+                                throw new Error('Nenhuma pergunta foi gerada');
+                            }
+                            
+                            document.getElementById('loadingIA').style.display = 'none';
+                            preencherFormulario(prova);
+                            alert(`✅ ${prova.perguntas.length} perguntas geradas com sucesso usando ${modelo}!`);
+                            sucesso = true;
+                            break;
+                            
+                        } catch (parseError) {
+                            console.error('JSON inválido:', texto);
+                            throw new Error('A IA retornou um formato inválido. Tente novamente.');
+                        }
+                    }
+                    
+                } catch (error) {
+                    if (error.message.includes('API não autorizada') || 
+                        error.message.includes('Chave API inválida') ||
+                        error.message.includes('formato inválido')) {
+                        document.getElementById('loadingIA').style.display = 'none';
+                        alert('❌ ' + error.message);
+                        return;
+                    }
+                    ultimoErro = error.message;
+                    console.error(`Erro com modelo ${modelo}:`, error);
                 }
-                
-                if(!data.candidates || !data.candidates[0]) {
-                    alert('❌ Resposta vazia da IA. Tente novamente.');
-                    return;
-                }
-                
-                let texto = data.candidates[0].content.parts[0].text;
-                texto = texto.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-                const prova = JSON.parse(texto);
-                
-                if(!prova.perguntas || prova.perguntas.length === 0) {
-                    alert('❌ Nenhuma pergunta gerada.');
-                    return;
-                }
-                
-                preencherFormulario(prova);
-                
-            } catch(error) {
-                document.getElementById('loadingIA').style.display = 'none';
-                alert('❌ Erro: ' + error.message);
+            }
+            
+            document.getElementById('loadingIA').style.display = 'none';
+            
+            if (!sucesso) {
+                alert('❌ Não foi possível gerar a prova com nenhum modelo disponível.\n\n' +
+                      'Possíveis causas:\n' +
+                      '1. API não ativada no Google Cloud Console\n' +
+                      '2. Chave API inválida ou expirada\n' +
+                      '3. Cota excedida\n\n' +
+                      'Último erro: ' + ultimoErro + '\n\n' +
+                      'Verifique em: https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com');
             }
         }
 
+        // [MANTER TODAS AS OUTRAS FUNÇÕES ORIGINAIS - sem alterações]
         function preencherFormulario(prova) {
             document.getElementById('formProva').style.display = 'block';
             document.getElementById('perguntas').innerHTML = '';
