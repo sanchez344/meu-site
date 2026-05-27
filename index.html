@@ -1,89 +1,525 @@
-async function gerarProvaComIA() {
-    const material = document.getElementById('materialIA').value;
-    const qtd = document.getElementById('quantidadeQuestoes').value || 10;
-    
-    if(!material.trim()) { alert('Cole um texto ou faça upload!'); return; }
-    if(!API_KEY) { alert('Configure sua chave API primeiro!'); return; }
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>avalie.ai - Gerador de Provas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.16/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .card { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 900px; width: 100%; }
+        h1 { color: #333; text-align: center; margin-bottom: 5px; }
+        .logo { text-align: center; font-size: 3em; }
+        .subtitulo { text-align: center; color: #666; margin-bottom: 30px; font-size: 14px; }
+        h2 { color: #555; margin: 20px 0; }
+        .tipo-usuario { display: flex; gap: 20px; justify-content: center; margin-bottom: 30px; }
+        .btn-professor, .btn-aluno { padding: 15px 30px; font-size: 18px; border: none; border-radius: 10px; cursor: pointer; }
+        .btn-professor { background: #4CAF50; color: white; }
+        .btn-aluno { background: #2196F3; color: white; }
+        .input, .textarea-material, .input-api { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .input-api { background: #fff8e1; border-color: #ff9800; font-family: monospace; }
+        .textarea-material { min-height: 150px; }
+        .btn-entrar, .btn-criar, .btn-salvar, .btn-entregar, .btn-voltar, .btn-gerar-ia, .btn-upload, .btn-salvar-api { width: 100%; padding: 12px; margin: 10px 0; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; color: white; }
+        .btn-entrar, .btn-criar, .btn-salvar, .btn-entregar, .btn-voltar { background: #667eea; }
+        .btn-gerar-ia { background: #e91e63; }
+        .btn-upload { background: #ff9800; }
+        .btn-salvar-api { background: #4CAF50; }
+        .btn-adicionar { background: #48bb78; color: white; padding: 10px; margin: 10px 0; border: none; border-radius: 8px; cursor: pointer; }
+        .pergunta-item { background: #f7f7f7; padding: 15px; margin: 10px 0; border-radius: 10px; }
+        .alternativa { margin: 5px 0; padding: 8px; background: white; border-radius: 5px; }
+        .prova-container { max-width: 800px; margin: 20px auto; background: white; border-radius: 20px; padding: 30px; }
+        .header-prova { display: flex; justify-content: space-between; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+        .timer { font-size: 24px; font-weight: bold; color: #e53e3e; }
+        .questao { margin: 30px 0; padding: 20px; background: #f7f7f7; border-radius: 10px; }
+        .opcao { margin: 10px 0; padding: 10px; cursor: pointer; border-radius: 8px; }
+        .dica { font-size: 12px; color: #999; text-align: center; margin-top: 10px; }
+        .modo-prova { -webkit-user-select: none; user-select: none; }
+        .loading { display: none; text-align: center; padding: 20px; background: #f0f0f0; border-radius: 10px; margin: 10px 0; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .ia-box { background: #f0f0ff; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .file-info { background: #e8f5e9; padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 14px; }
+        .config-box { background: #fff3e0; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #ff9800; }
+        .api-status { font-size: 12px; margin-top: 5px; padding: 5px; border-radius: 5px; }
+        .api-status.valid { background: #d4edda; color: #155724; }
+        .api-status.invalid { background: #f8d7da; color: #721c24; }
+        .flex-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .btn-pequeno { padding: 8px 15px; font-size: 14px; width: auto; margin: 0; }
+        .info-box { background: #e3f2fd; padding: 12px; border-radius: 8px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div id="telaLogin" class="container">
+        <div class="card">
+            <div class="logo">📚🤖</div>
+            <h1>avalie.ai</h1>
+            <div class="subtitulo">O gerador inteligente de provas online à prova de fraudes</div>
+            <div class="tipo-usuario">
+                <button onclick="mostrarLoginProfessor()" class="btn-professor">👨‍🏫 Sou Professor</button>
+                <button onclick="mostrarLoginAluno()" class="btn-aluno">🎓 Sou Aluno</button>
+            </div>
+            <div id="loginProfessor" style="display:none;">
+                <h2>Login do Professor</h2>
+                <input type="password" id="senhaProfessor" placeholder="Senha" class="input">
+                <button onclick="loginProfessor()" class="btn-entrar">Entrar</button>
+                <p class="dica">Senha: professor123</p>
+            </div>
+            <div id="loginAluno" style="display:none;">
+                <h2>Código da Prova</h2>
+                <input type="text" id="codigoProva" placeholder="Código" class="input">
+                <button onclick="entrarProva()" class="btn-entrar">Iniciar</button>
+            </div>
+        </div>
+    </div>
 
-    document.getElementById('loadingIA').style.display = 'block';
+    <div id="painelProfessor" style="display:none;">
+        <div class="container">
+            <div class="card">
+                <h1>👨‍🏫 avalie.ai</h1>
+                
+                <div class="config-box">
+                    <h3>🔑 Configurar Google Gemini (Grátis)</h3>
+                    <div class="info-box">
+                        <strong>⚠️ ATENÇÃO!</strong> Você precisa ativar a API no Google Cloud:<br>
+                        1. Acesse: <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank">https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com</a><br>
+                        2. Clique em "ATIVAR" (ENABLE)<br>
+                        3. Depois acesse: <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a><br>
+                        4. Clique em "Create API Key" e copie a chave
+                    </div>
+                    <div class="flex-row">
+                        <input type="text" id="apiKey" class="input-api" placeholder="Cole sua chave API (AIza...)" style="flex:1">
+                        <button onclick="salvarApiKey()" class="btn-salvar-api btn-pequeno">💾 Salvar</button>
+                    </div>
+                    <div id="statusApi" class="api-status"></div>
+                </div>
+                
+                <div class="ia-box">
+                    <h2>🤖 Gerar Prova com IA</h2>
+                    <p><strong>📁 Upload de arquivo (PPTX, DOCX, PDF, TXT):</strong></p>
+                    <input type="file" id="arquivoUpload" accept=".txt,.pdf,.docx,.pptx" class="input">
+                    <button onclick="uploadArquivo()" class="btn-upload">📂 Extrair Texto</button>
+                    <div id="fileInfo" class="file-info" style="display:none;"></div>
+                    
+                    <p><strong>📝 Ou cole o texto manualmente:</strong></p>
+                    <textarea id="materialIA" class="textarea-material" placeholder="Cole aqui o texto..."></textarea>
+                    
+                    <p><strong>🔢 Quantidade de questões:</strong></p>
+                    <input type="number" id="quantidadeQuestoes" class="input" value="10">
+                    
+                    <button onclick="gerarProvaComIA()" class="btn-gerar-ia">✨ GERAR PROVA COM IA ✨</button>
+                    <div id="loadingIA" class="loading">
+                        <div class="spinner"></div>
+                        <p>Gerando perguntas... até 30 segundos</p>
+                    </div>
+                </div>
+                <hr>
+                <button onclick="criarNovaProva()" class="btn-criar">✏️ Criar Prova Manual</button>
+                <div id="listaProvas"></div>
+                <div id="formProva" style="display:none;">
+                    <h2>Nova Prova</h2>
+                    <input type="text" id="tituloProva" placeholder="Título" class="input">
+                    <input type="number" id="tempoProva" placeholder="Tempo (minutos)" class="input">
+                    <div id="perguntas"></div>
+                    <button onclick="adicionarPergunta()" class="btn-adicionar">+ Pergunta</button>
+                    <button onclick="salvarProva()" class="btn-salvar">💾 Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    const prompt = `Crie ${qtd} perguntas de múltipla escolha com 4 alternativas. Responda APENAS JSON: {"titulo":"Título","perguntas":[{"texto":"Pergunta?","alternativas":["A","B","C","D"],"correta":0}]}
+    <div id="telaProva" style="display:none;">
+        <div class="prova-container">
+            <div class="header-prova">
+                <h2 id="tituloProvaAtual"></h2>
+                <div class="timer">⏱️ <span id="timer">00:00</span></div>
+            </div>
+            <div id="questoesProva"></div>
+            <button onclick="entregarProva()" class="btn-entregar">📤 Entregar</button>
+        </div>
+    </div>
+
+    <div id="telaResultado" style="display:none;">
+        <div class="container">
+            <div class="card">
+                <h1>📊 Resultado</h1>
+                <div id="resultado"></div>
+                <button onclick="voltarInicio()" class="btn-voltar">Voltar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let provas = JSON.parse(localStorage.getItem('provas')) || [];
+        let provaAtual = null;
+        let respostasAluno = [];
+        let API_KEY = localStorage.getItem('gemini_key') || "";
+        const SENHA = "professor123";
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        function atualizarStatus() {
+            const div = document.getElementById('statusApi');
+            if (API_KEY && API_KEY.startsWith('AIza')) {
+                div.innerHTML = '✅ Chave API configurada! Pronto para gerar provas.';
+                div.className = 'api-status valid';
+                if(document.getElementById('apiKey')) document.getElementById('apiKey').value = API_KEY;
+            } else {
+                div.innerHTML = '⚠️ Cole sua chave API acima (começa com AIza)';
+                div.className = 'api-status invalid';
+            }
+        }
+
+        function salvarApiKey() {
+            const key = document.getElementById('apiKey').value.trim();
+            if(key && key.length > 10) {
+                localStorage.setItem('gemini_key', key);
+                API_KEY = key;
+                atualizarStatus();
+                alert('✅ Chave salva! Agora clique em GERAR PROVA');
+            } else {
+                alert('❌ Cole uma chave válida');
+            }
+        }
+
+        async function uploadArquivo() {
+            const file = document.getElementById('arquivoUpload').files[0];
+            if(!file) { alert('Selecione um arquivo'); return; }
+            document.getElementById('loadingIA').style.display = 'block';
+            try {
+                let texto = "";
+                const ext = file.name.split('.').pop().toLowerCase();
+                if(ext === 'txt') texto = await lerTXT(file);
+                else if(ext === 'pdf') texto = await lerPDF(file);
+                else if(ext === 'docx') texto = await lerDOCX(file);
+                else if(ext === 'pptx') texto = await lerPPTX(file);
+                else throw new Error('Formato não suportado');
+                document.getElementById('materialIA').value = texto;
+                document.getElementById('fileInfo').innerHTML = `✅ ${file.name}<br>📝 ${texto.length} caracteres`;
+                document.getElementById('fileInfo').style.display = 'block';
+                alert(`✅ Extraído: ${texto.length} caracteres`);
+            } catch(e) { alert('Erro: '+e.message); }
+            document.getElementById('loadingIA').style.display = 'none';
+        }
+
+        function lerTXT(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('Erro'));
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+
+        async function lerPDF(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(e.target.result) }).promise;
+                        let texto = "";
+                        for(let i=1; i<=pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const content = await page.getTextContent();
+                            texto += content.items.map(item => item.str).join(' ') + "\n";
+                        }
+                        resolve(texto);
+                    } catch(err) { reject(err); }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        async function lerDOCX(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+                        resolve(result.value);
+                    } catch(err) { reject(err); }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        async function lerPPTX(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const zip = await JSZip.loadAsync(e.target.result);
+                        let texto = "";
+                        const slides = Object.keys(zip.files).filter(n => n.match(/slide\d+\.xml$/));
+                        for(const slide of slides) {
+                            const xml = await zip.files[slide].async("text");
+                            const matches = xml.match(/<a:t>([^<]*)<\/a:t>/g) || [];
+                            matches.forEach(m => {
+                                let t = m.replace(/<[^>]*>/g, '').trim();
+                                if(t) texto += t + " ";
+                            });
+                        }
+                        resolve(texto);
+                    } catch(err) { reject(err); }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // FUNÇÃO CORRIGIDA - GERAR PROVA COM IA
+        async function gerarProvaComIA() {
+            const material = document.getElementById('materialIA').value;
+            const qtd = document.getElementById('quantidadeQuestoes').value || 10;
+            
+            if(!material.trim()) { alert('Cole um texto ou faça upload!'); return; }
+            if(!API_KEY) { alert('Configure sua chave API primeiro!'); return; }
+
+            document.getElementById('loadingIA').style.display = 'block';
+
+            const prompt = `Crie ${qtd} perguntas de múltipla escolha com 4 alternativas. Responda APENAS JSON: {"titulo":"Título","perguntas":[{"texto":"Pergunta?","alternativas":["A","B","C","D"],"correta":0}]}
 
 Material: ${material.substring(0, 3000)}`;
 
-    // CORREÇÃO: Usar gemini-1.5-flash (modelo atualizado)
-    const model = 'gemini-1.5-flash';
-    
-    try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                contents: [{ 
-                    parts: [{ text: prompt }] 
-                }],
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 2048
+            // Lista de modelos para tentar (do mais recente ao mais antigo)
+            const modelos = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+            
+            for (const model of modelos) {
+                try {
+                    console.log(`Tentando modelo: ${model}...`);
+                    
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${API_KEY}`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            contents: [{ 
+                                parts: [{ text: prompt }] 
+                            }] 
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if(data.error) {
+                        console.log(`Modelo ${model} falhou:`, data.error.message);
+                        if(data.error.message.includes('not found') || data.error.status === 'NOT_FOUND') {
+                            continue; // Tenta o próximo modelo
+                        }
+                        document.getElementById('loadingIA').style.display = 'none';
+                        if(data.error.message.includes('API key')) {
+                            alert('❌ Chave API inválida. Gere uma nova chave em: https://aistudio.google.com/app/apikey');
+                        } else if(data.error.status === 'PERMISSION_DENIED') {
+                            alert('❌ API não autorizada. Ative em: https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com');
+                        } else {
+                            alert('❌ Erro: ' + data.error.message);
+                        }
+                        return;
+                    }
+                    
+                    if(!data.candidates || !data.candidates[0]) {
+                        continue; // Tenta o próximo modelo
+                    }
+                    
+                    let texto = data.candidates[0].content.parts[0].text;
+                    texto = texto.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+                    const prova = JSON.parse(texto);
+                    
+                    if(!prova.perguntas || prova.perguntas.length === 0) {
+                        alert('❌ Nenhuma pergunta gerada.');
+                        document.getElementById('loadingIA').style.display = 'none';
+                        return;
+                    }
+                    
+                    document.getElementById('loadingIA').style.display = 'none';
+                    preencherFormulario(prova);
+                    console.log(`✅ Sucesso com modelo: ${model}`);
+                    return; // Sucesso!
+                    
+                } catch(error) {
+                    console.log(`Erro com modelo ${model}:`, error.message);
+                    continue; // Tenta o próximo modelo
                 }
-            })
-        });
-        
-        const data = await response.json();
-        document.getElementById('loadingIA').style.display = 'none';
-        
-        // CORREÇÃO: Verificar erros específicos da API
-        if (!response.ok) {
-            if (data.error) {
-                if (data.error.status === 'NOT_FOUND') {
-                    alert('❌ Modelo não encontrado. Possíveis causas:\n\n' +
-                          '1. API não ativada no Google Cloud Console\n' +
-                          '2. Link para ativar: https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com\n' +
-                          '3. Após ativar, aguarde 2-3 minutos\n\n' +
-                          'Erro técnico: ' + data.error.message);
-                } else if (data.error.status === 'PERMISSION_DENIED') {
-                    alert('❌ API não autorizada!\n\n' +
-                          'Solução: Acesse o link abaixo e clique em ATIVAR:\n' +
-                          'https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com');
-                } else if (data.error.message && data.error.message.includes('API key')) {
-                    alert('❌ Chave API inválida!\n\n' +
-                          'Gere uma nova chave em:\n' +
-                          'https://aistudio.google.com/app/apikey');
-                } else {
-                    alert('❌ Erro: ' + data.error.message);
-                }
-            } else {
-                alert('❌ Erro desconhecido na API');
             }
-            return;
+            
+            // Se chegou aqui, nenhum modelo funcionou
+            document.getElementById('loadingIA').style.display = 'none';
+            alert('❌ Não foi possível gerar a prova.\n\n' +
+                  'Verifique se:\n' +
+                  '1. Ativou a API: https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com\n' +
+                  '2. Sua chave API é válida\n' +
+                  '3. Você tem conexão com a internet');
         }
-        
-        // CORREÇÃO: Verificar se a resposta tem conteúdo
-        if(!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-            alert('❌ Resposta vazia da IA. Tente novamente.');
-            return;
+
+        function preencherFormulario(prova) {
+            document.getElementById('formProva').style.display = 'block';
+            document.getElementById('perguntas').innerHTML = '';
+            document.getElementById('tituloProva').value = prova.titulo || "Prova IA";
+            document.getElementById('tempoProva').value = 30;
+            perguntaCount = 0;
+            
+            prova.perguntas.forEach(p => {
+                const div = document.getElementById('perguntas');
+                const pDiv = document.createElement('div');
+                pDiv.className = 'pergunta-item';
+                pDiv.id = `pergunta-${perguntaCount}`;
+                let altHTML = '';
+                p.alternativas.forEach((alt, idx) => {
+                    altHTML += `<div class="alternativa"><input type="text" id="alt${idx}-${perguntaCount}" value="${alt.replace(/"/g, '&quot;')}" style="width:80%"><input type="radio" name="correta-${perguntaCount}" value="${idx}" ${p.correta === idx ? 'checked' : ''}> ✅ Correta</div>`;
+                });
+                pDiv.innerHTML = `<h3>📝 Pergunta ${perguntaCount+1}</h3><input type="text" id="texto-${perguntaCount}" value="${p.texto.replace(/"/g, '&quot;')}" class="input"><div id="alternativas-${perguntaCount}">${altHTML}</div><button onclick="adicionarAlternativa(${perguntaCount})" class="btn-adicionar">+ Alternativa</button>`;
+                div.appendChild(pDiv);
+                perguntaCount++;
+            });
+            alert(`✅ ${prova.perguntas.length} perguntas geradas! Revise e clique em Salvar.`);
         }
-        
-        let texto = data.candidates[0].content.parts[0].text;
-        texto = texto.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        
-        const prova = JSON.parse(texto);
-        
-        if(!prova.perguntas || prova.perguntas.length === 0) {
-            alert('❌ Nenhuma pergunta gerada.');
-            return;
+
+        function mostrarLoginProfessor() {
+            document.getElementById('loginProfessor').style.display = 'block';
+            document.getElementById('loginAluno').style.display = 'none';
         }
-        
-        preencherFormulario(prova);
-        
-    } catch(error) {
-        document.getElementById('loadingIA').style.display = 'none';
-        console.error('Erro completo:', error);
-        alert('❌ Erro: ' + error.message + '\n\n' +
-              'Verifique se:\n' +
-              '1. A API está ATIVADA em: https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com\n' +
-              '2. Sua chave API é válida\n' +
-              '3. Você tem conexão com a internet');
-    }
-}
+        function mostrarLoginAluno() {
+            document.getElementById('loginAluno').style.display = 'block';
+            document.getElementById('loginProfessor').style.display = 'none';
+        }
+        function loginProfessor() {
+            const senha = document.getElementById('senhaProfessor').value;
+            if(senha === SENHA) {
+                document.getElementById('telaLogin').style.display = 'none';
+                document.getElementById('painelProfessor').style.display = 'block';
+                carregarListaProvas();
+                atualizarStatus();
+                if(API_KEY) document.getElementById('apiKey').value = API_KEY;
+            } else { alert('Senha incorreta!'); }
+        }
+        function carregarListaProvas() {
+            const lista = document.getElementById('listaProvas');
+            if(provas.length === 0) { lista.innerHTML = '<p>Nenhuma prova criada</p>'; return; }
+            lista.innerHTML = '<h2>📋 Provas</h2>';
+            provas.forEach((p, i) => {
+                lista.innerHTML += `<div style="background:#f7f7f7;padding:15px;margin:10px 0;border-radius:10px;"><strong>📌 ${p.titulo}</strong><br>⏱️ ${p.tempo} min<br>🔑 <strong>PROVA-${i+1000}</strong><br><button onclick="verResultados(${i})" style="margin-top:10px;padding:8px 15px;background:#667eea;color:white;border:none;border-radius:5px;">📊 Resultados</button></div>`;
+            });
+        }
+        function criarNovaProva() {
+            document.getElementById('formProva').style.display = 'block';
+            document.getElementById('perguntas').innerHTML = '';
+            adicionarPergunta();
+        }
+        let perguntaCount = 0;
+        function adicionarPergunta() {
+            const div = document.getElementById('perguntas');
+            const pDiv = document.createElement('div');
+            pDiv.className = 'pergunta-item';
+            pDiv.id = `pergunta-${perguntaCount}`;
+            pDiv.innerHTML = `<h3>📝 Pergunta ${perguntaCount+1}</h3><input type="text" id="texto-${perguntaCount}" placeholder="Enunciado" class="input"><div id="alternativas-${perguntaCount}"><div class="alternativa"><input type="text" id="alt0-${perguntaCount}" placeholder="A"><input type="radio" name="correta-${perguntaCount}" value="0"> Correta</div><div class="alternativa"><input type="text" id="alt1-${perguntaCount}" placeholder="B"><input type="radio" name="correta-${perguntaCount}" value="1"> Correta</div></div><button onclick="adicionarAlternativa(${perguntaCount})" class="btn-adicionar">+ Alternativa</button>`;
+            div.appendChild(pDiv);
+            perguntaCount++;
+        }
+        function adicionarAlternativa(id) {
+            const container = document.getElementById(`alternativas-${id}`);
+            const num = container.children.length;
+            const alt = document.createElement('div');
+            alt.className = 'alternativa';
+            alt.innerHTML = `<input type="text" id="alt${num}-${id}" placeholder="${String.fromCharCode(65+num)}"><input type="radio" name="correta-${id}" value="${num}"> Correta`;
+            container.appendChild(alt);
+        }
+        function salvarProva() {
+            const titulo = document.getElementById('tituloProva').value;
+            const tempo = parseInt(document.getElementById('tempoProva').value);
+            if(!titulo || !tempo) { alert('Preencha título e tempo'); return; }
+            const perguntas = [];
+            for(let i=0; i<perguntaCount; i++) {
+                const texto = document.getElementById(`texto-${i}`).value;
+                if(!texto) continue;
+                const alternativas = [];
+                let correta = null;
+                const radios = document.getElementsByName(`correta-${i}`);
+                for(let r=0; r<radios.length; r++) if(radios[r].checked) correta = r;
+                let idx=0;
+                while(true) {
+                    const alt = document.getElementById(`alt${idx}-${i}`);
+                    if(!alt) break;
+                    if(alt.value) alternativas.push(alt.value);
+                    idx++;
+                }
+                if(alternativas.length >= 2 && correta !== null) perguntas.push({ texto, alternativas, correta });
+            }
+            if(perguntas.length === 0) { alert('Adicione perguntas'); return; }
+            provas.push({ titulo, tempo, perguntas, resultados: [] });
+            localStorage.setItem('provas', JSON.stringify(provas));
+            alert(`✅ Prova salva! Código: PROVA-${provas.length-1+1000}`);
+            document.getElementById('formProva').style.display = 'none';
+            carregarListaProvas();
+            perguntaCount = 0;
+        }
+        function entrarProva() {
+            const cod = document.getElementById('codigoProva').value;
+            const match = cod.match(/PROVA-(\d+)/);
+            if(!match) { alert('Use PROVA-1000'); return; }
+            const idx = parseInt(match[1]) - 1000;
+            if(provas[idx]) { provaAtual = provas[idx]; iniciarProva(idx); }
+            else { alert('Código inválido'); }
+        }
+        function iniciarProva(idx) {
+            document.getElementById('telaLogin').style.display = 'none';
+            document.getElementById('telaProva').style.display = 'block';
+            document.getElementById('tituloProvaAtual').innerText = provaAtual.titulo;
+            let html = '';
+            provaAtual.perguntas.forEach((p, i) => {
+                html += `<div class="questao" id="q-${i}"><h3>${i+1}. ${p.texto}</h3>${p.alternativas.map((alt, j) => `<div class="opcao" onclick="selecionar(${i},${j})"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)} - ${alt}</div>`).join('')}</div>`;
+            });
+            document.getElementById('questoesProva').innerHTML = html;
+            respostasAluno = new Array(provaAtual.perguntas.length).fill(-1);
+            document.documentElement.requestFullscreen();
+            document.body.classList.add('modo-prova');
+            let tempoRestante = provaAtual.tempo * 60;
+            const timerEl = document.getElementById('timer');
+            const interval = setInterval(() => {
+                const min = Math.floor(tempoRestante/60);
+                const seg = tempoRestante%60;
+                timerEl.textContent = `${min.toString().padStart(2,'0')}:${seg.toString().padStart(2,'0')}`;
+                if(tempoRestante <= 0) { clearInterval(interval); alert('Tempo esgotado!'); entregarProva(); }
+                tempoRestante--;
+            }, 1000);
+            window.timerInterval = interval;
+            document.addEventListener('keydown', bloquear);
+            document.addEventListener('contextmenu', bloquearClique);
+        }
+        function selecionar(p, a) {
+            respostasAluno[p] = a;
+            for(let i=0; i<provaAtual.perguntas[p].alternativas.length; i++) {
+                const op = document.getElementById(`q-${p}`).querySelectorAll('.opcao')[i];
+                if(op) op.style.background = i === a ? '#c3e0ff' : '';
+            }
+        }
+        function bloquear(e) {
+            if(e.ctrlKey || e.key === 'F12') { e.preventDefault(); alert('Bloqueado!'); }
+        }
+        function bloquearClique(e) { e.preventDefault(); return false; }
+        function entregarProva() {
+            clearInterval(window.timerInterval);
+            document.removeEventListener('keydown', bloquear);
+            document.removeEventListener('contextmenu', bloquearClique);
+            if(document.fullscreenElement) document.exitFullscreen();
+            let acertos = 0;
+            provaAtual.perguntas.forEach((p, i) => { if(respostasAluno[i] === p.correta) acertos++; });
+            const nota = (acertos / provaAtual.perguntas.length) * 10;
+            provaAtual.resultados.push({ data: new Date().toLocaleString(), nota, acertos, total: provaAtual.perguntas.length });
+            localStorage.setItem('provas', JSON.stringify(provas));
+            document.getElementById('telaProva').style.display = 'none';
+            document.getElementById('telaResultado').style.display = 'block';
+            document.getElementById('resultado').innerHTML = `<h2>🎯 Nota: ${nota.toFixed(1)}</h2><p>✅ ${acertos}/${provaAtual.perguntas.length}</p>${acertos >= (provaAtual.perguntas.length*0.6) ? '<p style="color:green;">🎉 Aprovado!</p>' : '<p style="color:red;">📚 Reprovado</p>'}`;
+        }
+        function verResultados(idx) {
+            const p = provas[idx];
+            if(p.resultados.length === 0) { alert('Sem resultados'); return; }
+            let html = '<h2>📊 Resultados</h2>';
+            p.resultados.forEach((r, i) => { html += `<div style="background:#f0f0f0;padding:10px;margin:10px 0;border-radius:8px;"><strong>Aluno ${i+1}</strong><br>📅 ${r.data}<br>⭐ ${r.nota.toFixed(1)}<br>✅ ${r.acertos}/${r.total}</div>`; });
+            document.getElementById('listaProvas').innerHTML = html + '<button onclick="carregarListaProvas()" class="btn-voltar">← Voltar</button>';
+        }
+        function voltarInicio() { location.reload(); }
+    </script>
+</body>
+</html>
