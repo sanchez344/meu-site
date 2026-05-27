@@ -8,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.16/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        /* [MANTENHA TODO O CSS ORIGINAL AQUI - IGUAL AO SEU CÓDIGO] */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
         .container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
@@ -54,7 +53,6 @@
     </style>
 </head>
 <body>
-    <!-- [MANTENHA TODO O HTML ORIGINAL AQUI - IGUAL AO SEU CÓDIGO] -->
     <div id="telaLogin" class="container">
         <div class="card">
             <div class="logo">📚🤖</div>
@@ -87,7 +85,7 @@
                     <h3>🔑 Configurar Google Gemini (Grátis)</h3>
                     <div class="info-box">
                         <strong>⚠️ ATENÇÃO!</strong> Você precisa ativar a API no Google Cloud:<br>
-                        1. Acesse: <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank">https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com</a><br>
+                        1. Acesse: <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank">console.cloud.google.com/apis/library/generativelanguage.googleapis.com</a><br>
                         2. Clique em "ATIVAR" (ENABLE)<br>
                         3. Depois acesse: <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com/app/apikey</a><br>
                         4. Clique em "Create API Key" e copie a chave
@@ -155,17 +153,76 @@
     </div>
 
     <script>
-        // ===== CÓDIGO JAVASCRIPT CORRIGIDO =====
-        
+        // ===== VARIÁVEIS GLOBAIS =====
         let provas = JSON.parse(localStorage.getItem('provas')) || [];
         let provaAtual = null;
         let respostasAluno = [];
         let API_KEY = localStorage.getItem('gemini_key') || "";
         const SENHA = "professor123";
+        let perguntaCount = 0;
 
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        // Configuração do PDF.js
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        }
 
-        // Função para verificar e testar a API key
+        // ===== FUNÇÕES DE INTERFACE =====
+        function mostrarLoginProfessor() {
+            document.getElementById('loginProfessor').style.display = 'block';
+            document.getElementById('loginAluno').style.display = 'none';
+        }
+
+        function mostrarLoginAluno() {
+            document.getElementById('loginAluno').style.display = 'block';
+            document.getElementById('loginProfessor').style.display = 'none';
+        }
+
+        function loginProfessor() {
+            const senha = document.getElementById('senhaProfessor').value;
+            if (senha === SENHA) {
+                document.getElementById('telaLogin').style.display = 'none';
+                document.getElementById('painelProfessor').style.display = 'block';
+                carregarListaProvas();
+                atualizarStatus();
+                if (API_KEY) document.getElementById('apiKey').value = API_KEY;
+            } else {
+                alert('Senha incorreta!');
+            }
+        }
+
+        function carregarListaProvas() {
+            const lista = document.getElementById('listaProvas');
+            if (!lista) return;
+            
+            if (provas.length === 0) {
+                lista.innerHTML = '<p>Nenhuma prova criada</p>';
+                return;
+            }
+            
+            lista.innerHTML = '<h2>📋 Provas</h2>';
+            provas.forEach((p, i) => {
+                lista.innerHTML += `
+                    <div style="background:#f7f7f7;padding:15px;margin:10px 0;border-radius:10px;">
+                        <strong>📌 ${p.titulo}</strong><br>
+                        ⏱️ ${p.tempo} min<br>
+                        🔑 <strong>PROVA-${i+1000}</strong><br>
+                        <button onclick="verResultados(${i})" style="margin-top:10px;padding:8px 15px;background:#667eea;color:white;border:none;border-radius:5px;">📊 Resultados</button>
+                    </div>`;
+            });
+        }
+
+        function criarNovaProva() {
+            document.getElementById('formProva').style.display = 'block';
+            document.getElementById('perguntas').innerHTML = '';
+            perguntaCount = 0;
+            adicionarPergunta();
+        }
+
+        function voltarInicio() {
+            location.reload();
+        }
+
+        // ===== FUNÇÕES DA API GEMINI =====
         async function verificarApiKey() {
             const div = document.getElementById('statusApi');
             if (!div) return;
@@ -180,7 +237,6 @@
             div.className = 'api-status';
             
             try {
-                // Usa o modelo mais recente recomendado
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key=${API_KEY}`;
                 const response = await fetch(url);
                 
@@ -204,7 +260,7 @@
         }
 
         function atualizarStatus() {
-            if(document.getElementById('apiKey')) {
+            if (document.getElementById('apiKey')) {
                 document.getElementById('apiKey').value = API_KEY;
             }
             verificarApiKey();
@@ -212,7 +268,7 @@
 
         function salvarApiKey() {
             const key = document.getElementById('apiKey').value.trim();
-            if(key && key.startsWith('AIza') && key.length > 30) {
+            if (key && key.startsWith('AIza') && key.length > 30) {
                 localStorage.setItem('gemini_key', key);
                 API_KEY = key;
                 verificarApiKey();
@@ -222,104 +278,18 @@
             }
         }
 
-        // [MANTENHA AS FUNÇÕES DE UPLOAD ORIGINAIS AQUI]
-        async function uploadArquivo() {
-            const file = document.getElementById('arquivoUpload').files[0];
-            if(!file) { alert('Selecione um arquivo'); return; }
-            document.getElementById('loadingIA').style.display = 'block';
-            try {
-                let texto = "";
-                const ext = file.name.split('.').pop().toLowerCase();
-                if(ext === 'txt') texto = await lerTXT(file);
-                else if(ext === 'pdf') texto = await lerPDF(file);
-                else if(ext === 'docx') texto = await lerDOCX(file);
-                else if(ext === 'pptx') texto = await lerPPTX(file);
-                else throw new Error('Formato não suportado');
-                document.getElementById('materialIA').value = texto;
-                document.getElementById('fileInfo').innerHTML = `✅ ${file.name}<br>📝 ${texto.length} caracteres`;
-                document.getElementById('fileInfo').style.display = 'block';
-                alert(`✅ Extraído: ${texto.length} caracteres`);
-            } catch(e) { alert('Erro: '+e.message); }
-            document.getElementById('loadingIA').style.display = 'none';
-        }
-
-        function lerTXT(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = e => resolve(e.target.result);
-                reader.onerror = () => reject(new Error('Erro ao ler arquivo TXT'));
-                reader.readAsText(file, 'UTF-8');
-            });
-        }
-
-        async function lerPDF(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    try {
-                        const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(e.target.result) }).promise;
-                        let texto = "";
-                        for(let i=1; i<=pdf.numPages; i++) {
-                            const page = await pdf.getPage(i);
-                            const content = await page.getTextContent();
-                            texto += content.items.map(item => item.str).join(' ') + "\n";
-                        }
-                        resolve(texto);
-                    } catch(err) { reject(err); }
-                };
-                reader.readAsArrayBuffer(file);
-            });
-        }
-
-        async function lerDOCX(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    try {
-                        const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
-                        resolve(result.value);
-                    } catch(err) { reject(err); }
-                };
-                reader.readAsArrayBuffer(file);
-            });
-        }
-
-        async function lerPPTX(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    try {
-                        const zip = await JSZip.loadAsync(e.target.result);
-                        let texto = "";
-                        const slides = Object.keys(zip.files).filter(n => n.match(/slide\d+\.xml$/));
-                        for(const slide of slides) {
-                            const xml = await zip.files[slide].async("text");
-                            const matches = xml.match(/<a:t>([^<]*)<\/a:t>/g) || [];
-                            matches.forEach(m => {
-                                let t = m.replace(/<[^>]*>/g, '').trim();
-                                if(t) texto += t + " ";
-                            });
-                        }
-                        resolve(texto);
-                    } catch(err) { reject(err); }
-                };
-                reader.readAsArrayBuffer(file);
-            });
-        }
-
-        // FUNÇÃO PRINCIPAL CORRIGIDA - AGORA COM MODELOS ATUAIS
         async function gerarProvaComIA() {
             const material = document.getElementById('materialIA').value;
             const qtd = parseInt(document.getElementById('quantidadeQuestoes').value) || 10;
             
-            if(!material.trim()) { 
-                alert('❌ Cole um texto ou faça upload de um arquivo!'); 
-                return; 
+            if (!material.trim()) {
+                alert('❌ Cole um texto ou faça upload de um arquivo!');
+                return;
             }
             
-            if(!API_KEY || !API_KEY.startsWith('AIza')) { 
-                alert('❌ Configure sua chave API primeiro! Acesse https://aistudio.google.com/app/apikey'); 
-                return; 
+            if (!API_KEY || !API_KEY.startsWith('AIza')) {
+                alert('❌ Configure sua chave API primeiro! Acesse https://aistudio.google.com/app/apikey');
+                return;
             }
 
             document.getElementById('loadingIA').style.display = 'block';
@@ -340,112 +310,88 @@ Responda APENAS com um objeto JSON válido no seguinte formato:
 Material de estudo:
 ${material.substring(0, 5000)}`;
 
-            // Lista atualizada de modelos (maio/2026)
-            const modelosParaTentar = [
-                'gemini-1.5-flash',     // Recomendado para maioria das tarefas
-                'gemini-1.5-pro',       // Para raciocínio mais complexo
-                'gemini-2.0-flash',     // Mais recente (se disponível)
-            ];
+            // Modelo atualizado para gemini-1.5-flash
+            const modelo = 'gemini-1.5-flash';
             
-            let ultimoErro = '';
-            
-            for (const modelo of modelosParaTentar) {
-                try {
-                    console.log(`🔄 Tentando modelo: ${modelo}...`);
-                    
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${API_KEY}`;
-                    
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ 
-                            contents: [{ 
-                                parts: [{ text: prompt }] 
-                            }],
-                            generationConfig: {
-                                temperature: 0.7,
-                                maxOutputTokens: 2048,
-                            }
-                        })
-                    });
-                    
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        const errorMsg = errorData.error?.message || 'Erro desconhecido';
-                        const errorStatus = errorData.error?.status;
-                        
-                        console.log(`❌ Modelo ${modelo} falhou: [${errorStatus}] ${errorMsg}`);
-                        
-                        if (errorStatus === 'NOT_FOUND') {
-                            ultimoErro = `Modelo '${modelo}' não encontrado`;
-                            continue; // Tenta o próximo modelo
-                        } else if (errorStatus === 'PERMISSION_DENIED') {
-                            document.getElementById('loadingIA').style.display = 'none';
-                            alert('❌ API não autorizada!\n\nVocê precisa ATIVAR a Generative Language API:\n1. Acesse: https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com\n2. Clique em "ATIVAR"\n3. Aguarde alguns minutos e tente novamente');
-                            return;
-                        } else if (errorStatus === 'INVALID_ARGUMENT' || errorMsg.includes('API key')) {
-                            document.getElementById('loadingIA').style.display = 'none';
-                            alert('❌ Chave API inválida!\n\nGere uma nova chave em:\nhttps://aistudio.google.com/app/apikey');
-                            return;
-                        } else {
-                            ultimoErro = errorMsg;
-                            continue;
+            try {
+                console.log(`🔄 Usando modelo: ${modelo}`);
+                
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${API_KEY}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{ text: prompt }]
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 2048,
                         }
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    const errorMsg = errorData.error?.message || 'Erro desconhecido';
+                    const errorStatus = errorData.error?.status;
+                    
+                    console.error(`❌ Erro da API: [${errorStatus}] ${errorMsg}`);
+                    
+                    if (errorStatus === 'NOT_FOUND') {
+                        throw new Error(`MODELO NÃO ENCONTRADO: O modelo '${modelo}' não está disponível. Verifique se ativou a API no Google Cloud Console.`);
+                    } else if (errorStatus === 'PERMISSION_DENIED') {
+                        throw new Error('API NÃO ATIVADA: Acesse https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com e clique em ATIVAR');
+                    } else if (errorStatus === 'INVALID_ARGUMENT' || errorMsg.includes('API key')) {
+                        throw new Error('CHAVE INVÁLIDA: Gere uma nova chave em https://aistudio.google.com/app/apikey');
+                    } else {
+                        throw new Error(errorMsg);
                     }
-                    
-                    const data = await response.json();
-                    
-                    if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                        let texto = data.candidates[0].content.parts[0].text;
-                        
-                        // Remove marcadores de código markdown
-                        texto = texto.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-                        
-                        try {
-                            const prova = JSON.parse(texto);
-                            
-                            if (!prova.perguntas || prova.perguntas.length === 0) {
-                                throw new Error('Nenhuma pergunta gerada');
-                            }
-                            
-                            document.getElementById('loadingIA').style.display = 'none';
-                            preencherFormulario(prova);
-                            console.log(`✅ Sucesso com modelo: ${modelo}`);
-                            return; // Sucesso, sai da função
-                            
-                        } catch (parseError) {
-                            console.error('Erro ao parsear JSON:', texto);
-                            throw new Error('Formato de resposta inválido. Tente novamente.');
-                        }
-                    }
-                    
-                } catch (error) {
-                    console.error(`Erro com modelo ${modelo}:`, error);
-                    ultimoErro = error.message;
                 }
+                
+                const data = await response.json();
+                
+                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                    throw new Error('Resposta vazia da IA');
+                }
+                
+                let texto = data.candidates[0].content.parts[0].text;
+                
+                // Limpa marcadores de código markdown
+                texto = texto.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+                
+                try {
+                    const prova = JSON.parse(texto);
+                    
+                    if (!prova.perguntas || prova.perguntas.length === 0) {
+                        throw new Error('Nenhuma pergunta gerada');
+                    }
+                    
+                    document.getElementById('loadingIA').style.display = 'none';
+                    preencherFormulario(prova);
+                    console.log('✅ Prova gerada com sucesso!');
+                    
+                } catch (parseError) {
+                    console.error('Erro ao parsear JSON:', texto);
+                    throw new Error('Formato de resposta inválido. A IA retornou um formato não esperado. Tente novamente.');
+                }
+                
+            } catch (error) {
+                document.getElementById('loadingIA').style.display = 'none';
+                console.error('Erro completo:', error);
+                
+                alert('❌ ERRO AO GERAR PROVA\n\n' + error.message + '\n\n' +
+                      'SOLUÇÕES POSSÍVEIS:\n' +
+                      '1. Verifique se ativou a API: https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com\n' +
+                      '2. Gere uma nova chave: https://aistudio.google.com/app/apikey\n' +
+                      '3. Aguarde alguns minutos após ativar a API\n' +
+                      '4. Verifique sua conexão com a internet');
             }
-            
-            // Se chegou aqui, nenhum modelo funcionou
-            document.getElementById('loadingIA').style.display = 'none';
-            
-            alert('❌ FALHA AO GERAR PROVA\n\n' +
-                  'Nenhum modelo disponível funcionou.\n\n' +
-                  'CAUSAS POSSÍVEIS:\n' +
-                  '1. API não ativada no Google Cloud Console\n' +
-                  '2. Chave API inválida, expirada ou sem permissão\n' +
-                  '3. Cota de uso excedida (limite gratuito)\n' +
-                  '4. Problema de conexão com a internet\n\n' +
-                  'ÚLTIMO ERRO: ' + ultimoErro + '\n\n' +
-                  'SOLUÇÃO:\n' +
-                  '• Acesse: https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com\n' +
-                  '• Clique em ATIVAR (ENABLE)\n' +
-                  '• Gere nova chave em: https://aistudio.google.com/app/apikey\n' +
-                  '• Cole a nova chave e clique em SALVAR');
         }
 
-        // [MANTENHA O RESTO DAS FUNÇÕES ORIGINAIS AQUI]
         function preencherFormulario(prova) {
             document.getElementById('formProva').style.display = 'block';
             document.getElementById('perguntas').innerHTML = '';
@@ -458,141 +404,327 @@ ${material.substring(0, 5000)}`;
                 const pDiv = document.createElement('div');
                 pDiv.className = 'pergunta-item';
                 pDiv.id = `pergunta-${perguntaCount}`;
+                
                 let altHTML = '';
                 p.alternativas.forEach((alt, idx) => {
-                    altHTML += `<div class="alternativa"><input type="text" id="alt${idx}-${perguntaCount}" value="${alt.replace(/"/g, '&quot;')}" style="width:80%"><input type="radio" name="correta-${perguntaCount}" value="${idx}" ${p.correta === idx ? 'checked' : ''}> ✅ Correta</div>`;
+                    altHTML += `<div class="alternativa">
+                        <input type="text" id="alt${idx}-${perguntaCount}" value="${alt.replace(/"/g, '&quot;')}" style="width:80%">
+                        <input type="radio" name="correta-${perguntaCount}" value="${idx}" ${p.correta === idx ? 'checked' : ''}> ✅ Correta
+                    </div>`;
                 });
-                pDiv.innerHTML = `<h3>📝 Pergunta ${perguntaCount+1}</h3><input type="text" id="texto-${perguntaCount}" value="${p.texto.replace(/"/g, '&quot;')}" class="input"><div id="alternativas-${perguntaCount}">${altHTML}</div><button onclick="adicionarAlternativa(${perguntaCount})" class="btn-adicionar">+ Alternativa</button>`;
+                
+                pDiv.innerHTML = `
+                    <h3>📝 Pergunta ${perguntaCount+1}</h3>
+                    <input type="text" id="texto-${perguntaCount}" value="${p.texto.replace(/"/g, '&quot;')}" class="input">
+                    <div id="alternativas-${perguntaCount}">${altHTML}</div>
+                    <button onclick="adicionarAlternativa(${perguntaCount})" class="btn-adicionar">+ Alternativa</button>`;
+                
                 div.appendChild(pDiv);
                 perguntaCount++;
             });
+            
             alert(`✅ ${prova.perguntas.length} perguntas geradas! Revise e clique em Salvar.`);
         }
 
-        function mostrarLoginProfessor() {
-            document.getElementById('loginProfessor').style.display = 'block';
-            document.getElementById('loginAluno').style.display = 'none';
+        // ===== FUNÇÕES DE UPLOAD DE ARQUIVOS =====
+        async function uploadArquivo() {
+            const file = document.getElementById('arquivoUpload').files[0];
+            if (!file) {
+                alert('Selecione um arquivo');
+                return;
+            }
+            
+            document.getElementById('loadingIA').style.display = 'block';
+            
+            try {
+                let texto = "";
+                const ext = file.name.split('.').pop().toLowerCase();
+                
+                if (ext === 'txt') texto = await lerTXT(file);
+                else if (ext === 'pdf') texto = await lerPDF(file);
+                else if (ext === 'docx') texto = await lerDOCX(file);
+                else if (ext === 'pptx') texto = await lerPPTX(file);
+                else throw new Error('Formato não suportado');
+                
+                document.getElementById('materialIA').value = texto;
+                document.getElementById('fileInfo').innerHTML = `✅ ${file.name}<br>📝 ${texto.length} caracteres`;
+                document.getElementById('fileInfo').style.display = 'block';
+                alert(`✅ Extraído: ${texto.length} caracteres`);
+                
+            } catch (e) {
+                alert('Erro: ' + e.message);
+            }
+            
+            document.getElementById('loadingIA').style.display = 'none';
         }
-        function mostrarLoginAluno() {
-            document.getElementById('loginAluno').style.display = 'block';
-            document.getElementById('loginProfessor').style.display = 'none';
-        }
-        function loginProfessor() {
-            const senha = document.getElementById('senhaProfessor').value;
-            if(senha === SENHA) {
-                document.getElementById('telaLogin').style.display = 'none';
-                document.getElementById('painelProfessor').style.display = 'block';
-                carregarListaProvas();
-                atualizarStatus();
-                if(API_KEY) document.getElementById('apiKey').value = API_KEY;
-            } else { alert('Senha incorreta!'); }
-        }
-        function carregarListaProvas() {
-            const lista = document.getElementById('listaProvas');
-            if(provas.length === 0) { lista.innerHTML = '<p>Nenhuma prova criada</p>'; return; }
-            lista.innerHTML = '<h2>📋 Provas</h2>';
-            provas.forEach((p, i) => {
-                lista.innerHTML += `<div style="background:#f7f7f7;padding:15px;margin:10px 0;border-radius:10px;"><strong>📌 ${p.titulo}</strong><br>⏱️ ${p.tempo} min<br>🔑 <strong>PROVA-${i+1000}</strong><br><button onclick="verResultados(${i})" style="margin-top:10px;padding:8px 15px;background:#667eea;color:white;border:none;border-radius:5px;">📊 Resultados</button></div>`;
+
+        function lerTXT(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('Erro ao ler arquivo TXT'));
+                reader.readAsText(file, 'UTF-8');
             });
         }
-        function criarNovaProva() {
-            document.getElementById('formProva').style.display = 'block';
-            document.getElementById('perguntas').innerHTML = '';
-            adicionarPergunta();
+
+        async function lerPDF(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(e.target.result) }).promise;
+                        let texto = "";
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const content = await page.getTextContent();
+                            texto += content.items.map(item => item.str).join(' ') + "\n";
+                        }
+                        resolve(texto);
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
         }
-        let perguntaCount = 0;
+
+        async function lerDOCX(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+                        resolve(result.value);
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        async function lerPPTX(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const zip = await JSZip.loadAsync(e.target.result);
+                        let texto = "";
+                        const slides = Object.keys(zip.files).filter(n => n.match(/slide\d+\.xml$/));
+                        for (const slide of slides) {
+                            const xml = await zip.files[slide].async("text");
+                            const matches = xml.match(/<a:t>([^<]*)<\/a:t>/g) || [];
+                            matches.forEach(m => {
+                                let t = m.replace(/<[^>]*>/g, '').trim();
+                                if (t) texto += t + " ";
+                            });
+                        }
+                        resolve(texto);
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // ===== FUNÇÕES DE CRIAÇÃO MANUAL DE PROVAS =====
         function adicionarPergunta() {
             const div = document.getElementById('perguntas');
             const pDiv = document.createElement('div');
             pDiv.className = 'pergunta-item';
             pDiv.id = `pergunta-${perguntaCount}`;
-            pDiv.innerHTML = `<h3>📝 Pergunta ${perguntaCount+1}</h3><input type="text" id="texto-${perguntaCount}" placeholder="Enunciado" class="input"><div id="alternativas-${perguntaCount}"><div class="alternativa"><input type="text" id="alt0-${perguntaCount}" placeholder="A"><input type="radio" name="correta-${perguntaCount}" value="0"> Correta</div><div class="alternativa"><input type="text" id="alt1-${perguntaCount}" placeholder="B"><input type="radio" name="correta-${perguntaCount}" value="1"> Correta</div></div><button onclick="adicionarAlternativa(${perguntaCount})" class="btn-adicionar">+ Alternativa</button>`;
+            pDiv.innerHTML = `
+                <h3>📝 Pergunta ${perguntaCount+1}</h3>
+                <input type="text" id="texto-${perguntaCount}" placeholder="Enunciado" class="input">
+                <div id="alternativas-${perguntaCount}">
+                    <div class="alternativa">
+                        <input type="text" id="alt0-${perguntaCount}" placeholder="A">
+                        <input type="radio" name="correta-${perguntaCount}" value="0"> Correta
+                    </div>
+                    <div class="alternativa">
+                        <input type="text" id="alt1-${perguntaCount}" placeholder="B">
+                        <input type="radio" name="correta-${perguntaCount}" value="1"> Correta
+                    </div>
+                </div>
+                <button onclick="adicionarAlternativa(${perguntaCount})" class="btn-adicionar">+ Alternativa</button>`;
             div.appendChild(pDiv);
             perguntaCount++;
         }
+
         function adicionarAlternativa(id) {
             const container = document.getElementById(`alternativas-${id}`);
             const num = container.children.length;
             const alt = document.createElement('div');
             alt.className = 'alternativa';
-            alt.innerHTML = `<input type="text" id="alt${num}-${id}" placeholder="${String.fromCharCode(65+num)}"><input type="radio" name="correta-${id}" value="${num}"> Correta`;
+            alt.innerHTML = `
+                <input type="text" id="alt${num}-${id}" placeholder="${String.fromCharCode(65+num)}">
+                <input type="radio" name="correta-${id}" value="${num}"> Correta`;
             container.appendChild(alt);
         }
+
         function salvarProva() {
             const titulo = document.getElementById('tituloProva').value;
             const tempo = parseInt(document.getElementById('tempoProva').value);
-            if(!titulo || !tempo) { alert('Preencha título e tempo'); return; }
+            
+            if (!titulo || !tempo) {
+                alert('Preencha título e tempo');
+                return;
+            }
+            
             const perguntas = [];
-            for(let i=0; i<perguntaCount; i++) {
+            for (let i = 0; i < perguntaCount; i++) {
                 const texto = document.getElementById(`texto-${i}`).value;
-                if(!texto) continue;
+                if (!texto) continue;
+                
                 const alternativas = [];
                 let correta = null;
                 const radios = document.getElementsByName(`correta-${i}`);
-                for(let r=0; r<radios.length; r++) if(radios[r].checked) correta = r;
-                let idx=0;
-                while(true) {
+                
+                for (let r = 0; r < radios.length; r++) {
+                    if (radios[r].checked) correta = r;
+                }
+                
+                let idx = 0;
+                while (true) {
                     const alt = document.getElementById(`alt${idx}-${i}`);
-                    if(!alt) break;
-                    if(alt.value) alternativas.push(alt.value);
+                    if (!alt) break;
+                    if (alt.value) alternativas.push(alt.value);
                     idx++;
                 }
-                if(alternativas.length >= 2 && correta !== null) perguntas.push({ texto, alternativas, correta });
+                
+                if (alternativas.length >= 2 && correta !== null) {
+                    perguntas.push({ texto, alternativas, correta });
+                }
             }
-            if(perguntas.length === 0) { alert('Adicione perguntas'); return; }
+            
+            if (perguntas.length === 0) {
+                alert('Adicione perguntas');
+                return;
+            }
+            
             provas.push({ titulo, tempo, perguntas, resultados: [] });
             localStorage.setItem('provas', JSON.stringify(provas));
-            alert(`✅ Prova salva! Código: PROVA-${provas.length-1+1000}`);
+            
+            alert(`✅ Prova salva! Código: PROVA-${provas.length - 1 + 1000}`);
             document.getElementById('formProva').style.display = 'none';
             carregarListaProvas();
             perguntaCount = 0;
         }
+
+        // ===== FUNÇÕES DO ALUNO =====
         function entrarProva() {
             const cod = document.getElementById('codigoProva').value;
             const match = cod.match(/PROVA-(\d+)/);
-            if(!match) { alert('Use PROVA-1000'); return; }
+            
+            if (!match) {
+                alert('Use o formato PROVA-1000');
+                return;
+            }
+            
             const idx = parseInt(match[1]) - 1000;
-            if(provas[idx]) { provaAtual = provas[idx]; iniciarProva(idx); }
-            else { alert('Código inválido'); }
+            
+            if (provas[idx]) {
+                provaAtual = provas[idx];
+                iniciarProva(idx);
+            } else {
+                alert('Código inválido');
+            }
         }
+
         function iniciarProva(idx) {
             document.getElementById('telaLogin').style.display = 'none';
             document.getElementById('telaProva').style.display = 'block';
             document.getElementById('tituloProvaAtual').innerText = provaAtual.titulo;
+            
             let html = '';
             provaAtual.perguntas.forEach((p, i) => {
-                html += `<div class="questao" id="q-${i}"><h3>${i+1}. ${p.texto}</h3>${p.alternativas.map((alt, j) => `<div class="opcao" onclick="selecionar(${i},${j})"><input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65+j)} - ${alt}</div>`).join('')}</div>`;
+                html += `<div class="questao" id="q-${i}">
+                    <h3>${i + 1}. ${p.texto}</h3>
+                    ${p.alternativas.map((alt, j) => `
+                        <div class="opcao" onclick="selecionar(${i},${j})">
+                            <input type="radio" name="q${i}" value="${j}"> ${String.fromCharCode(65 + j)} - ${alt}
+                        </div>
+                    `).join('')}
+                </div>`;
             });
+            
             document.getElementById('questoesProva').innerHTML = html;
             respostasAluno = new Array(provaAtual.perguntas.length).fill(-1);
-            document.documentElement.requestFullscreen();
+            
+            // Tenta entrar em tela cheia
+            try {
+                document.documentElement.requestFullscreen();
+            } catch (e) {
+                console.log('Tela cheia não suportada');
+            }
+            
             document.body.classList.add('modo-prova');
+            
             let tempoRestante = provaAtual.tempo * 60;
             const timerEl = document.getElementById('timer');
+            
             const interval = setInterval(() => {
-                const min = Math.floor(tempoRestante/60);
-                const seg = tempoRestante%60;
-                timerEl.textContent = `${min.toString().padStart(2,'0')}:${seg.toString().padStart(2,'0')}`;
-                if(tempoRestante <= 0) { clearInterval(interval); alert('Tempo esgotado!'); entregarProva(); }
+                const min = Math.floor(tempoRestante / 60);
+                const seg = tempoRestante % 60;
+                timerEl.textContent = `${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`;
+                
+                if (tempoRestante <= 0) {
+                    clearInterval(interval);
+                    alert('Tempo esgotado!');
+                    entregarProva();
+                }
                 tempoRestante--;
             }, 1000);
+            
             window.timerInterval = interval;
             document.addEventListener('keydown', bloquear);
             document.addEventListener('contextmenu', bloquearClique);
         }
+
         function selecionar(p, a) {
             respostasAluno[p] = a;
-            for(let i=0; i<provaAtual.perguntas[p].alternativas.length; i++) {
-                const op = document.getElementById(`q-${p}`).querySelectorAll('.opcao')[i];
-                if(op) op.style.background = i === a ? '#c3e0ff' : '';
+            const opcoes = document.getElementById(`q-${p}`).querySelectorAll('.opcao');
+            opcoes.forEach((op, i) => {
+                op.style.background = i === a ? '#c3e0ff' : '';
+            });
+        }
+
+        function bloquear(e) {
+            if (e.ctrlKey || e.key === 'F12') {
+                e.preventDefault();
+                alert('Ação bloqueada!');
             }
         }
-        function bloquear(e) {
-            if(e.ctrlKey || e.key === 'F12') { e.preventDefault(); alert('Bloqueado!'); }
+
+        function bloquearClique(e) {
+            e.preventDefault();
+            return false;
         }
-        function bloquearClique(e) { e.preventDefault(); return false; }
+
         function entregarProva() {
             clearInterval(window.timerInterval);
             document.removeEventListener('keydown', bloquear);
             document.removeEventListener('contextmenu', bloquearClique);
-            if(document
+            
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+            
+            document.body.classList.remove('modo-prova');
+            
+            let acertos = 0;
+            provaAtual.perguntas.forEach((p, i) => {
+                if (respostasAluno[i] === p.correta) acertos++;
+            });
+            
+            const nota = (acertos / provaAtual.perguntas.length) * 10;
+            
+            provaAtual.resultados.push({
+                data: new Date().toLocaleString(),
+                nota,
+                acertos,
+                total: provaAtual.perguntas.length
+            });
+            
+            localStorage.set
